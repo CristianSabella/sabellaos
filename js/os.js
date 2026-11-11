@@ -1,6 +1,6 @@
 // SabellaOS: escritorio, ventanas, barra de tareas y menú inicio
-import { APPS, ESCRITORIO, ANCLADAS } from './apps.js?v=20261110c';
-import { PERFIL } from './datos.js?v=20261110c';
+import { APPS, ESCRITORIO, ANCLADAS } from './apps.js?v=20261110d';
+import { PERFIL, PROYECTOS } from './datos.js?v=20261110d';
 
 const $ = s => document.querySelector(s);
 const esCelu = () => document.body.classList.contains('celu');
@@ -129,22 +129,62 @@ function marcarTareas() {
   });
 }
 
-// ---------- Menú inicio ----------
+// ---------- Menú inicio (estilo Windows 10: barra lateral, lista A-Z y mosaicos) ----------
+const RECIENTES = ['friday', 'jarvis', 'juego-buscaminas'];
+const COLORES = { proyectos: '#1d5fa8', sobremi: '#5b3fc4', cv: '#2a4a8a', juegos: '#7a2fb0', musica: '#b0287f', terminal: '#1b2433', contacto: '#3a3f9e', jarvis: '#1e6fd9', friday: '#8b1d3f', whatsapp: '#1a9e52', 'juego-2048': '#c2410c', 'juego-sudoku': '#0f766e', 'juego-buscaminas': '#4b5563' };
+const GRUPOS = [
+  ['Trabajo', [['proyectos', 'g'], ['cv', 'm'], ['sobremi', 'm'], ['contacto', 'm'], ['whatsapp', 'm'], ['terminal', 'a']]],
+  ['Asistentes', [['jarvis', 'a'], ['friday', 'a']]],
+  ['Entretenimiento', [['musica', 'a'], ['juegos', 'm'], ['juego-2048', 'm'], ['juego-sudoku', 'm'], ['juego-buscaminas', 'm']]]
+];
+let vivoTimer = null;
+const icChico = id => `<span class="ic-ini" style="background:${COLORES[id] || '#1d5fa8'}">${APPS[id].icono}</span>`;
 function abrirInicio(filtro = '') {
   const m = $('#inicio-menu'); m.hidden = false; $('#btn-inicio').classList.add('on');
   const f = filtro.trim().toLowerCase();
-  const ids = Object.keys(APPS).filter(id => !f || (APPS[id].nombre + ' ' + (APPS[id].buscar || '')).toLowerCase().includes(f));
-  m.innerHTML = `<div class="lado"><button title="Mi perfil" data-a="sobremi">👤</button><button title="Contacto" data-a="contacto">✉️</button><button title="Apagar (volver a la habitación)" data-a="apagar">⏻</button></div>
-    <div class="lista">${f ? '' : `<div class="yo"><img src="${PERFIL.foto}" alt=""><div><b>${PERFIL.nombre}</b><small>${PERFIL.rol}</small></div></div>`}
-    <h4>${f ? 'RESULTADOS' : 'APLICACIONES'}</h4>
-    ${ids.map(id => `<button class="item" data-a="${id}"><span class="ic-app">${APPS[id].icono}</span>${APPS[id].nombre}</button>`).join('') || '<p class="muted" style="padding:10px">No encontré nada con ese nombre.</p>'}</div>`;
+  const item = id => `<button class="item" data-a="${id}">${icChico(id)}<span>${APPS[id].nombre}</span></button>`;
+  let lista;
+  if (f) {
+    const ids = Object.keys(APPS).filter(id => (APPS[id].nombre + ' ' + (APPS[id].buscar || '')).toLowerCase().includes(f));
+    lista = `<h4>Mejor coincidencia</h4>${ids.map(item).join('') || '<p class="muted" style="padding:10px">No encontré nada con ese nombre.</p>'}`;
+  } else {
+    const orden = Object.keys(APPS).sort((x, y) => APPS[x].nombre.localeCompare(APPS[y].nombre, 'es'));
+    let letra = '', az = '';
+    orden.forEach(id => { const l = APPS[id].nombre[0].toUpperCase().normalize('NFD')[0]; const L = /[A-Z]/.test(l) ? l : '#'; if (L !== letra) { letra = L; az += `<div class="letra">${L}</div>`; } az += item(id); });
+    lista = `<h4>Agregadas recientemente</h4>${RECIENTES.map(item).join('')}${az}`;
+  }
+  const mosaico = ([id, t]) => {
+    const a = APPS[id];
+    if (id === 'proyectos') return `<button class="mos g vivo" data-a="${id}" style="--c:${COLORES[id]}"><div class="vivo-img"></div><span class="mos-ic">${a.icono}</span><b>${a.nombre}</b></button>`;
+    if (id === 'musica') return `<button class="mos ${t}" data-a="${id}" style="--c:${COLORES[id]}"><span class="mos-ic">${a.icono}</span><small>Sonando ahora<br><em>NEFFEX</em></small><b>${a.nombre}</b></button>`;
+    if (id === 'jarvis' || id === 'friday') return `<button class="mos ${t}" data-a="${id}" style="--c:${COLORES[id]}"><span class="mos-ic">${a.icono}</span><small>● En línea<br><em>Escribime 👋</em></small><b>${a.nombre}</b></button>`;
+    return `<button class="mos ${t}" data-a="${id}" style="--c:${COLORES[id]}"><span class="mos-ic">${a.icono}</span><b>${a.nombre}</b></button>`;
+  };
+  m.classList.toggle('buscando', !!f);
+  m.innerHTML = `<div class="lado">
+      <button class="hamb" title="Expandir"><span>☰</span><em>INICIO</em></button>
+      <div class="lado-abajo">
+        <button data-a="sobremi" title="${PERFIL.nombre}"><img src="${PERFIL.foto}" alt=""><em>${PERFIL.nombre}</em></button>
+        <button data-a="cv" title="Documentos"><span>🗎</span><em>Documentos</em></button>
+        <button data-a="proyectos" title="Imágenes"><span>🖼</span><em>Imágenes</em></button>
+        <button data-a="terminal" title="Configuración"><span>⚙</span><em>Configuración</em></button>
+        <button data-a="apagar" title="Apagar (volver a la habitación)"><span>⏻</span><em>Inicio/Apagado</em></button>
+      </div></div>
+    <div class="lista">${lista}</div>
+    <div class="mosaicos">${GRUPOS.map(([g, its]) => `<div class="grupo"><h5>${g}</h5><div class="rejilla">${its.map(mosaico).join('')}</div></div>`).join('')}</div>`;
+  m.querySelector('.hamb').onclick = () => m.querySelector('.lado').classList.toggle('abierto');
   m.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
     const a = b.dataset.a; cerrarInicio();
     if (a === 'apagar') return OS.apagar && OS.apagar();
     abrir(a);
   });
+  // mosaico "en vivo": va pasando las fotos de los proyectos
+  const fotos = PROYECTOS.filter(p => p.img).map(p => [p.img, p.nombre]);
+  const caja = m.querySelector('.vivo-img'); let n = 0;
+  const pasar = () => { if (!caja || !fotos.length) return; const [src, nom] = fotos[n++ % fotos.length]; const d = document.createElement('div'); d.className = 'foto'; d.style.backgroundImage = `url("${src}")`; d.innerHTML = `<i>${nom}</i>`; caja.appendChild(d); while (caja.children.length > 2) caja.firstChild.remove(); };
+  clearInterval(vivoTimer); pasar(); vivoTimer = setInterval(pasar, 3200);
 }
-function cerrarInicio() { $('#inicio-menu').hidden = true; $('#btn-inicio').classList.remove('on'); }
+function cerrarInicio() { clearInterval(vivoTimer); $('#inicio-menu').hidden = true; $('#btn-inicio').classList.remove('on'); }
 
 // ---------- Avisos ----------
 function aviso(titulo, texto, alTocar) {
