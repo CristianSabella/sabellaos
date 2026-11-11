@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SabellaOS · Cristian Sabella | Desarrollador de Software</title>
+<meta name="description" content="Portfolio de Cristian Sabella: un escritorio gamer en 3D con su propio sistema, SabellaOS. Proyectos, juegos, música y chatbots.">
+<meta name="theme-color" content="#050b14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/os.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+
+<!-- ENTRADA: la habitación gamer en 3D -->
+<section id="entrada">
+  <canvas id="escena"></canvas>
+  <div id="entrada-txt">
+    <small>&lt;CristianSabella /&gt;</small>
+    <h1>Bienvenido a<br><span>SabellaOS</span></h1>
+    <p>Desarrollador de Software · Rosario</p>
+  </div>
+  <button id="entrar" type="button">🖱️ <b>Hacé clic en la PC</b> para entrar</button>
+  <button id="saltar" type="button">Entrar directo →</button>
+  <div id="cargando"><i></i><span>Encendiendo la PC…</span></div>
+</section>
+
+<!-- SABELLAOS: el escritorio -->
+<section id="os" hidden>
+  <div id="fondo"><canvas id="lluvia"></canvas><div id="fondo-logo"><b>SabellaOS</b><span>CRISTIAN SABELLA · DESARROLLADOR</span></div></div>
+  <div id="iconos"></div>
+  <div id="ventanas"></div>
+  <div id="inicio-menu" hidden></div>
+  <div id="avisos"></div>
+  <nav id="barra">
+    <button id="btn-inicio" type="button" aria-label="Inicio"><b>CS</b></button>
+    <label id="buscar"><span>🔍</span><input id="buscar-input" placeholder="Escribí aquí para buscar" autocomplete="off"></label>
+    <div id="tareas"></div>
+    <div id="bandeja">
+      <button id="btn-musica" type="button" aria-label="Música">🔊</button>
+      <span class="solo-pc">📶</span><span class="solo-pc">ESP</span>
+      <div id="reloj"><b></b><small></small></div>
+    </div>
+  </nav>
+</section>
+
+<div id="cortina"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
