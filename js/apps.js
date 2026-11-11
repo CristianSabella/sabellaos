@@ -1,5 +1,5 @@
 // Las aplicaciones de SabellaOS
-import { PROYECTOS, PERFIL, CANCIONES, SITIO_VIEJO } from './datos.js?v=20261110e';
+import { PROYECTOS, PERFIL, CANCIONES, SITIO_VIEJO } from './datos.js?v=20261110f';
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -92,7 +92,7 @@ function appCV(cuerpo) {
 // ---------- Juegos ----------
 const JUEGOS = [
   ['2048', '🔢', '2048', 'juegos/2048.html'], ['sudoku', '🧩', 'Sudoku', 'juegos/sudoku.html'], ['buscaminas', '💣', 'Buscaminas', 'juegos/buscaminas.html'],
-  ['stack', '🧱', 'Stack', null], ['snake', '🐍', 'Snake', null], ['cascada', '🟪', 'Cascada', null], ['arena', '🔫', 'Arena Helada', null]
+  ['stack', '🧱', 'Stack', 'juegos/jugar.html?j=stack'], ['snake', '🐍', 'Snake', 'juegos/jugar.html?j=snake'], ['cascada', '🟪', 'Cascada', 'juegos/jugar.html?j=cascada'], ['arena', '🔫', 'Arena Helada', 'juegos/jugar.html?j=arena']
 ];
 function appJuegos(cuerpo, ctx) {
   cuerpo.innerHTML = `<div class="pad"><div class="ruta">Este equipo › Juegos</div><div class="grilla">${JUEGOS.map(([id, ic, nom, url]) => {
@@ -103,6 +103,9 @@ function appJuegos(cuerpo, ctx) {
     if (APPS['juego-' + b.dataset.id]) ctx.OS.abrir('juego-' + b.dataset.id);
     else ctx.OS.aviso('🎮 Muy pronto', 'Este juego se suma a SabellaOS en la próxima etapa.');
   });
+}
+function juegoLocal(url) { // juegos que viven en SabellaOS (juegos/jugar.html carga el motor del portafolios)
+  return (cuerpo) => { cuerpo.innerHTML = `<iframe class="app-frame" src="${url}" title="Juego" allow="autoplay; fullscreen; pointer-lock"></iframe>`; cuerpo.style.overflow = 'hidden'; const f = cuerpo.querySelector('iframe'); f.addEventListener('load', () => { try { f.contentWindow.focus(); } catch (e) {} }); };
 }
 function juegoIframe(url) {
   return (cuerpo) => { cuerpo.innerHTML = `<iframe class="app-frame" src="${SITIO_VIEJO}${url}" title="Juego" allow="autoplay"></iframe>`; cuerpo.style.overflow = 'hidden'; };
@@ -163,7 +166,7 @@ function appTerminal(cuerpo, ctx) {
     proyectos: () => PROYECTOS.map(p => `  <span class="a">•</span> ${esc(p.nombre)} <span class="g">${esc(p.sub)}</span>`).join('\n') + '\n' + abrirApp('proyectos'),
     cv: () => abrirApp('cv'), contacto: () => PERFIL.emails.map(e => '  ✉️ ' + e).join('\n') + '\n' + abrirApp('contacto'),
     musica: () => abrirApp('musica'), juegos: () => JUEGOS.map(j => `  ${j[1]} ${j[2]}${j[3] ? '' : ' <span class="g">(muy pronto)</span>'}`).join('\n'),
-    jugar: a => { const j = JUEGOS.find(x => x[0] === (a || '').toLowerCase() || x[2].toLowerCase() === (a || '').toLowerCase()); if (!j) return 'Decime cuál: jugar 2048, jugar sudoku o jugar buscaminas'; if (!j[3]) return `${j[2]} llega en la próxima etapa 🎮`; return abrirApp('juego-' + j[0]); },
+    jugar: a => { const j = JUEGOS.find(x => x[0] === (a || '').toLowerCase() || x[2].toLowerCase() === (a || '').toLowerCase()); if (!j) return 'Decime cuál: jugar stack, snake, cascada, arena, 2048, sudoku o buscaminas'; if (!j[3]) return `${j[2]} llega en la próxima etapa 🎮`; return abrirApp('juego-' + j[0]); },
     fecha: () => new Date().toLocaleString('es-AR'), limpiar: () => { sal.innerHTML = ''; return null; }, clear: () => CMD.limpiar(),
     apagar: () => { setTimeout(() => ctx.OS.apagar && ctx.OS.apagar(), 600); return 'Apagando SabellaOS… 👋'; },
     whoami: () => 'coti', hola: () => '¡Hola! 👋 Escribí <span class="a">ayuda</span> para ver qué podés hacer.',
@@ -241,6 +244,10 @@ export const APPS = {
   whatsapp: { nombre: 'WhatsApp', icono: '📱', enlace: WHATSAPP, buscar: 'contacto mensaje celular' },
   'juego-2048': { nombre: '2048', icono: '🔢', ancho: 470, alto: 760, render: juegoIframe('juegos/2048.html'), buscar: 'juego' },
   'juego-sudoku': { nombre: 'Sudoku', icono: '🧩', ancho: 500, alto: 820, render: juegoIframe('juegos/sudoku.html'), buscar: 'juego' },
+  'juego-stack': { nombre: 'Stack', icono: '🧱', ancho: 480, alto: 780, render: juegoLocal('juegos/jugar.html?j=stack'), buscar: 'juego torre bloques' },
+  'juego-snake': { nombre: 'Snake', icono: '🐍', ancho: 480, alto: 720, render: juegoLocal('juegos/jugar.html?j=snake'), buscar: 'juego viborita' },
+  'juego-cascada': { nombre: 'Cascada', icono: '🟪', ancho: 520, alto: 760, render: juegoLocal('juegos/jugar.html?j=cascada'), buscar: 'juego piezas tetris' },
+  'juego-arena': { nombre: 'Arena Helada', icono: '🔫', ancho: 1040, alto: 640, render: juegoLocal('juegos/jugar.html?j=arena'), buscar: 'juego shooter 3d disparos' },
   'juego-buscaminas': { nombre: 'Buscaminas', icono: '💣', ancho: 520, alto: 820, render: juegoIframe('juegos/buscaminas.html'), buscar: 'juego minas' }
 };
 export const ESCRITORIO = ['proyectos', 'sobremi', 'cv', 'juegos', 'musica', 'terminal', 'jarvis', 'friday', 'whatsapp', 'contacto'];

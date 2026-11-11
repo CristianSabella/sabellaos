@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Juego · SabellaOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  html, body { margin: 0; min-height: 100%; background: #050b14; color: #e6f4ff; font-family: Inter, system-ui, sans-serif; }
+  body { padding: 14px; box-sizing: border-box; }
+  #juegos-app .j-tabs { display: none !important; }
+  body.ancha #juegos-app { max-width: none !important; }
+  .j-caja { border: 0 !important; background: transparent !important; padding: 0 !important; }
+</style>
+</head>
+<body>
+<!-- Esta página abre un solo juego del portafolios (Stack, Snake, Cascada o Arena Helada) adentro de SabellaOS -->
+<div id="juegos-app"></div>
+<script src="https://cristiansabella.github.io/SabellaCristian/js/juegos.js"></script>
+<script>
+  const j = new URLSearchParams(location.search).get('j') || 'stack';
+  if (j === 'arena') document.body.classList.add('ancha');
+  const b = document.querySelector(`.j-tabs button[data-j="${j}"]`);
+  if (b) b.click();
+  // las teclas funcionan apenas se abre, sin tener que tocar el juego primero
+  document.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+  const app = document.getElementById('juegos-app');
+  app.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+  window.focus();
+</script>
+</body>
+</html>

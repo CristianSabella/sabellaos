@@ -143,7 +143,7 @@ export const PROYECTOS = [
    "Lua (Luau)",
    "DataStore"
   ],
-  "img": null,
+  "img": "img/obby.jpg",
   "video": null,
   "badge": "Videojuego",
   "jugar": null,
@@ -464,7 +464,7 @@ export const PROYECTOS = [
    "SQL Server",
    "TCP"
   ],
-  "img": null,
+  "img": "img/mmorpg.jpg",
   "video": null,
   "badge": "",
   "jugar": null,

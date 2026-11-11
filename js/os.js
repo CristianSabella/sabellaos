@@ -1,6 +1,6 @@
 // SabellaOS: escritorio, ventanas, barra de tareas y menú inicio
-import { APPS, ESCRITORIO, ANCLADAS } from './apps.js?v=20261110e';
-import { PERFIL, PROYECTOS } from './datos.js?v=20261110e';
+import { APPS, ESCRITORIO, ANCLADAS } from './apps.js?v=20261110f';
+import { PERFIL, PROYECTOS } from './datos.js?v=20261110f';
 
 const $ = s => document.querySelector(s);
 const esCelu = () => document.body.classList.contains('celu');
@@ -131,11 +131,11 @@ function marcarTareas() {
 
 // ---------- Menú inicio (estilo Windows 10: barra lateral, lista A-Z y mosaicos) ----------
 const RECIENTES = ['friday', 'jarvis', 'juego-buscaminas'];
-const COLORES = { proyectos: '#1d5fa8', sobremi: '#5b3fc4', cv: '#2a4a8a', juegos: '#7a2fb0', musica: '#b0287f', terminal: '#1b2433', contacto: '#3a3f9e', jarvis: '#1e6fd9', friday: '#8b1d3f', whatsapp: '#1a9e52', 'juego-2048': '#c2410c', 'juego-sudoku': '#0f766e', 'juego-buscaminas': '#4b5563' };
+const COLORES = { proyectos: '#1d5fa8', sobremi: '#5b3fc4', cv: '#2a4a8a', juegos: '#7a2fb0', musica: '#b0287f', terminal: '#1b2433', contacto: '#3a3f9e', jarvis: '#1e6fd9', friday: '#8b1d3f', whatsapp: '#1a9e52', 'juego-2048': '#c2410c', 'juego-sudoku': '#0f766e', 'juego-buscaminas': '#4b5563', 'juego-stack': '#9d2b8a', 'juego-snake': '#1d6b8f', 'juego-cascada': '#5b2bb5', 'juego-arena': '#22577a' };
 const GRUPOS = [
   ['Trabajo', [['proyectos', 'g'], ['cv', 'm'], ['sobremi', 'm'], ['contacto', 'm'], ['whatsapp', 'm'], ['terminal', 'a']]],
   ['Asistentes', [['jarvis', 'a'], ['friday', 'a']]],
-  ['Entretenimiento', [['musica', 'a'], ['juegos', 'm'], ['juego-2048', 'm'], ['juego-sudoku', 'm'], ['juego-buscaminas', 'm']]]
+  ['Entretenimiento', [['musica', 'a'], ['juegos', 'm'], ['juego-arena', 'm'], ['juego-stack', 'm'], ['juego-snake', 'm'], ['juego-cascada', 'm'], ['juego-2048', 'm'], ['juego-sudoku', 'm'], ['juego-buscaminas', 'm']]]
 ];
 let vivoTimer = null;
 const icChico = id => `<span class="ic-ini" style="background:${COLORES[id] || '#1d5fa8'}">${APPS[id].icono}</span>`;
