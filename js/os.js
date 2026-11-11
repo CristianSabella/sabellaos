@@ -1,6 +1,6 @@
 // SabellaOS: escritorio, ventanas, barra de tareas y menú inicio
-import { APPS, ESCRITORIO, ANCLADAS } from './apps.js?v=20261110b';
-import { PERFIL } from './datos.js?v=20261110b';
+import { APPS, ESCRITORIO, ANCLADAS } from './apps.js?v=20261110c';
+import { PERFIL } from './datos.js?v=20261110c';
 
 const $ = s => document.querySelector(s);
 const esCelu = () => document.body.classList.contains('celu');

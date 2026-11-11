@@ -327,7 +327,7 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   // ---------- Carteles flotantes que explican qué se puede tocar ----------
   const capa = document.createElement('div'); capa.id = 'marcas'; canvas.parentElement.appendChild(capa);
   const MARCAS = [
-    { obj: cel, alto: .42, c: '#25d366', txt: celu ? '📱 ¡Te llaman! Escribime' : '📱 ¡Te están llamando! Escribime por WhatsApp', accion: () => window.open(whatsapp, '_blank', 'noopener') },
+    { obj: cel, alto: .42, c: '#25d366', txt: '📱 ¡Atendeme!!!', accion: () => window.open(whatsapp, '_blank', 'noopener') },
     { obj: rob, alto: .55, c: '#4fc3ff', txt: '🤖 Hablá con Jarvis', accion: () => entrar('jarvis') },
     { obj: fri, alto: .55, c: '#ff5fd2', txt: '💬 Hablá con Friday', accion: () => entrar('friday') }
   ];
