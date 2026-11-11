@@ -12,7 +12,7 @@ const ida = t => { t = ((t % 2) + 2) % 2; return t < 1 ? t : 2 - t; };
 
 export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   const r = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false });
-  let calidad = Math.min(window.devicePixelRatio || 1, celu ? 1 : 1.25); r.setPixelRatio(calidad);
+  const PISO = celu ? .9 : 1; let calidad = Math.min(window.devicePixelRatio || 1, celu ? 1.5 : 1.75), brilloDiv = 2; r.setPixelRatio(calidad);
   r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.25;
   const sc = new THREE.Scene(); sc.background = new THREE.Color('#070b16'); sc.fog = new THREE.Fog('#070b16', 14, 30);
   const cam = new THREE.PerspectiveCamera(36, 1, .05, 60);
@@ -26,7 +26,7 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   // ---------- Luces (paredes bañadas de celeste y violeta, como un setup real) ----------
   sc.add(new THREE.HemisphereLight('#6f8fe0', '#2a1640', 1.25));
   const lCeleste = new THREE.PointLight('#38d6ff', 30, 11, 1.5); lCeleste.position.set(-3.6, 3.2, .4); sc.add(lCeleste);
-  const lVioleta = new THREE.PointLight('#a855f7', 26, 9, 1.5); lVioleta.position.set(.2, .55, .2); sc.add(lVioleta); // bajo el escritorio
+  const lVioleta = new THREE.PointLight('#a855f7', 18, 7, 1.6); lVioleta.position.set(.4, .5, -.7); sc.add(lVioleta); // bajo el escritorio
   const lFuc = new THREE.PointLight('#ff4fd8', 18, 8, 1.6); lFuc.position.set(1.6, 3.4, -.9); sc.add(lFuc);
   const sol = new THREE.DirectionalLight('#b8a8ff', .55); sol.position.set(1, 6, 7); sc.add(sol);
 
@@ -41,17 +41,37 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
     const v = x.createLinearGradient(0, 0, 0, h); v.addColorStop(0, 'rgba(6,8,20,.65)'); v.addColorStop(.55, 'rgba(6,8,20,0)'); v.addColorStop(.75, 'rgba(120,80,255,.12)'); v.addColorStop(1, 'rgba(6,8,20,.35)'); x.fillStyle = v; x.fillRect(0, 0, w, h);
     for (let i = 0; i < 3000; i++) { x.fillStyle = `rgba(255,255,255,${Math.random() * .02})`; x.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
   });
-  const fondo = add(new THREE.PlaneGeometry(14, 7), new THREE.MeshStandardMaterial({ map: texFondo, emissive: '#ffffff', emissiveMap: texFondo, emissiveIntensity: .38, roughness: .95 }), 0, 3.5, -1.7);
+  const fondo = add(new THREE.PlaneGeometry(22, 7), new THREE.MeshStandardMaterial({ map: texFondo, emissive: '#ffffff', emissiveMap: texFondo, emissiveIntensity: .38, roughness: .95 }), 0, 3.5, -1.7);
   const texLat = textura(512, 512, (x, w, h) => {
     const g = x.createLinearGradient(w, 0, 0, 0); g.addColorStop(0, '#1d5a96'); g.addColorStop(1, '#122a52'); x.fillStyle = g; x.fillRect(0, 0, w, h);
     const v = x.createLinearGradient(0, 0, 0, h); v.addColorStop(0, 'rgba(6,8,20,.6)'); v.addColorStop(.6, 'rgba(6,8,20,0)'); v.addColorStop(1, 'rgba(6,8,20,.3)'); x.fillStyle = v; x.fillRect(0, 0, w, h);
   });
   const lat = add(new THREE.PlaneGeometry(10, 7), new THREE.MeshStandardMaterial({ map: texLat, emissive: '#ffffff', emissiveMap: texLat, emissiveIntensity: .32, roughness: .95 }), -5.2, 3.5, 3.3); lat.rotation.y = Math.PI / 2;
-  // piso alfombrado lila
-  const texPiso = textura(256, 256, (x, w, h) => { x.fillStyle = '#4a3a6e'; x.fillRect(0, 0, w, h); for (let i = 0; i < 9000; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '0,0,0'},${Math.random() * .06})`; x.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5); } }, 14, 14);
-  add(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ map: texPiso, roughness: .95, color: '#9b8fbf' }), 0, 0, 0).rotation.x = -Math.PI / 2;
+  // piso de madera negra (tablas con veta), con un poco de brillo para que refleje las luces
+  const texPiso = textura(1024, 1024, (x, w, h) => {
+    x.fillStyle = '#121216'; x.fillRect(0, 0, w, h);
+    const alto = 64;
+    for (let f = 0; f < h / alto; f++) {
+      let px = -Math.random() * 400;
+      while (px < w) {
+        const largo = 380 + Math.random() * 420, tono = 16 + Math.random() * 12;
+        x.fillStyle = `rgb(${tono},${tono},${tono + 3})`; x.fillRect(px, f * alto, largo, alto);
+        for (let v = 0; v < 14; v++) { // veta de la madera
+          x.strokeStyle = `rgba(${Math.random() < .5 ? '0,0,0' : '70,70,80'},${.12 + Math.random() * .18})`; x.lineWidth = .6 + Math.random() * 1.4;
+          const y0 = f * alto + Math.random() * alto; x.beginPath(); x.moveTo(px, y0);
+          for (let k = 1; k <= 8; k++) x.lineTo(px + largo * k / 8, y0 + Math.sin(k * 1.3 + v) * (2 + Math.random() * 3));
+          x.stroke();
+        }
+        if (Math.random() < .25) { x.strokeStyle = 'rgba(0,0,0,.35)'; x.beginPath(); x.ellipse(px + Math.random() * largo, f * alto + alto / 2, 14, 5, 0, 0, 7); x.stroke(); } // nudo
+        x.fillStyle = 'rgba(0,0,0,.85)'; x.fillRect(px, f * alto, 2, alto); // junta entre tablas
+        px += largo;
+      }
+      x.fillStyle = 'rgba(0,0,0,.9)'; x.fillRect(0, f * alto, w, 2);
+    }
+  }, 5, 5);
+  const piso = add(new THREE.PlaneGeometry(24, 24), new THREE.MeshStandardMaterial({ map: texPiso, roughness: .55, metalness: .1, color: '#c9c6d6' }), 0, 0, 2); piso.rotation.x = -Math.PI / 2; piso.rotation.z = Math.PI / 2;
   // cornisa LED en el techo
-  const corn = add(new THREE.BoxGeometry(14, .05, .05), brillo(VIO, 1.2), 0, 6.2, -1.62);
+  const corn = add(new THREE.BoxGeometry(22, .05, .05), brillo(VIO, 1.2), 0, 6.2, -1.62);
   animados.push(t => corn.material.emissive.copy(degrade(.5 + Math.sin(t * .3) * .25)));
 
   // ventana con la ciudad de noche y cortinas
@@ -92,6 +112,13 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   add(new RoundedBoxGeometry(.16, .14, .14, 2, .03), mat('#1d4fb0'), 0, .03, 0, rob);
   add(new THREE.SphereGeometry(.025, 12, 8), brillo(FUC, 3), 0, .32, 0, rob);
   animados.push(t => { rob.rotation.y = Math.sin(t * .6) * .5; });
+  // Friday (la robot bordó que también se toca)
+  const fri = new THREE.Group(); fri.position.set(2.3, 3.18, -1.5); fri.scale.setScalar(1.35); sc.add(fri);
+  add(new THREE.SphereGeometry(.11, 20, 14), mat('#7a1838', { metalness: .4, roughness: .35 }), 0, .2, 0, fri);
+  add(new THREE.BoxGeometry(.15, .035, .02), brillo(FUC, 2.6), 0, .21, .1, fri);
+  add(new THREE.CylinderGeometry(.06, .09, .14, 16), mat('#5c1029', { metalness: .4 }), 0, .05, 0, fri);
+  for (const s of [-1, 1]) add(new THREE.ConeGeometry(.03, .08, 8), mat('#7a1838'), s * .07, .32, 0, fri);
+  animados.push(t => { fri.rotation.y = Math.sin(t * .5 + 2) * .5; fri.position.y = 3.18 + Math.sin(t * 1.4) * .015; });
   // figura de un guerrero y un mecha
   const fig = (x, y, col) => { add(new THREE.CylinderGeometry(.06, .07, .03, 16), mat('#111'), x, y + .015, -1.5); add(new THREE.CapsuleGeometry(.045, .16, 4, 8), mat(col, { metalness: .5 }), x, y + .14, -1.5); add(new THREE.SphereGeometry(.04, 12, 8), mat(col), x, y + .29, -1.5); };
   fig(1.35, 3.62, '#8a93a8'); fig(1.6, 3.62, '#c2410c');
@@ -99,8 +126,6 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   add(new THREE.BoxGeometry(.42, .5, .3), new THREE.MeshPhysicalMaterial({ color: '#cfe8ff', transparent: true, opacity: .12, roughness: .05 }), 3.0, 3.42, -1.5);
   const vitrinaLuz = add(new THREE.BoxGeometry(.42, .015, .3), brillo(FUC, 1.6), 3.0, 3.66, -1.5);
   fig(3.0, 3.17, '#e8bd4c');
-  add(new THREE.SphereGeometry(.09, 12, 8), mat('#3aa36b'), 2.45, 3.25, -1.5); // plantita colgante
-  for (let i = 0; i < 5; i++) add(new THREE.SphereGeometry(.04, 8, 6), mat('#2f8a58'), 2.45 + Math.sin(i) * .04, 3.15 - i * .07, -1.45);
 
   const mtx = new THREE.Matrix4(), colTmp = new THREE.Color();
   // ---------- Escritorio en L con patas cruzadas ----------
@@ -119,8 +144,8 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   const bajo2 = add(new THREE.BoxGeometry(.03, .02, 2.5), brillo(VIO, 2), -1.82, .98, 1.77);
   animados.push(t => { const c = degrade(.45 + Math.sin(t * .4) * .2); bajo1.material.emissive.copy(c); bajo2.material.emissive.copy(c); });
   // planta en el escritorio
-  add(new THREE.CylinderGeometry(.14, .11, .2, 20), mat('#e9e4f2', { roughness: .4 }), -2.75, 1.17, 1.6);
-  for (let i = 0; i < 10; i++) { const h = add(new THREE.SphereGeometry(.13, 10, 6), mat(i % 2 ? '#1f8a5a' : '#2aa06a', { roughness: .8 }), -2.75 + Math.cos(i * 2.4) * .14, 1.36 + (i % 3) * .07, 1.6 + Math.sin(i * 2.4) * .12); h.scale.set(.6, .35, 1.2); h.rotation.y = i; }
+  add(new THREE.CylinderGeometry(.14, .11, .2, 20), mat('#e9e4f2', { roughness: .4 }), -2.75, 1.17, 2.3);
+  for (let i = 0; i < 10; i++) { const h = add(new THREE.SphereGeometry(.13, 10, 6), mat(i % 2 ? '#1f8a5a' : '#2aa06a', { roughness: .8 }), -2.75 + Math.cos(i * 2.4) * .14, 1.36 + (i % 3) * .07, 2.3 + Math.sin(i * 2.4) * .12); h.scale.set(.6, .35, 1.2); h.rotation.y = i; }
   // auriculares en soporte
   add(new THREE.CylinderGeometry(.11, .11, .02, 24), mat('#151c2c', { metalness: .85 }), -1.75, 1.07, -.95);
   add(new THREE.CylinderGeometry(.02, .02, .5, 12), mat('#151c2c', { metalness: .85 }), -1.75, 1.33, -.95);
@@ -198,8 +223,8 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   animados.push((t, dt) => { for (let i = 0; i < vaporN; i++) { vv[i] = (vv[i] + dt * .25) % 1; const k = vv[i]; vp[i * 3] = -1.45 + Math.sin(t * 2 + i) * .03 * k; vp[i * 3 + 1] = 1.25 + k * .45; vp[i * 3 + 2] = .45 + Math.cos(t * 1.5 + i) * .03 * k; } vaporG.attributes.position.needsUpdate = true; });
 
   // ---------- Celular sonando (WhatsApp) ----------
-  const cel = new THREE.Group(); cel.position.set(-.98, 1.27, .6); cel.rotation.set(1.05, .3, 0, 'YXZ'); cel.scale.setScalar(1.45); sc.add(cel);
-  const soporte = add(new THREE.BoxGeometry(.3, .05, .22), mat('#1b2130', { metalness: .7 }), -.98, 1.085, .52); soporte.rotation.y = .3;
+  const cel = new THREE.Group(); cel.position.set(2.35, 1.27, .5); cel.rotation.set(1.05, -.45, 0, 'YXZ'); cel.scale.setScalar(1.45); sc.add(cel);
+  const soporte = add(new THREE.BoxGeometry(.3, .05, .22), mat('#1b2130', { metalness: .7 }), 2.35, 1.085, .42); soporte.rotation.y = -.45;
   add(new RoundedBoxGeometry(.24, .025, .46, 3, .03), mat('#0b0d12', { metalness: .7, roughness: .25 }), 0, 0, 0, cel);
   const cc = document.createElement('canvas'); cc.width = 256; cc.height = 512; const cx = cc.getContext('2d');
   function dibujarCel(on) {
@@ -217,7 +242,7 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   let celOn = true;
   animados.push(t => {
     const ciclo = t % 2.6, suena = ciclo < 1.5;
-    cel.position.x = -.98 + (suena ? Math.sin(t * 90) * .007 : 0); cel.rotation.z = suena ? Math.sin(t * 70) * .05 : 0;
+    cel.position.x = 2.35 + (suena ? Math.sin(t * 90) * .007 : 0); cel.rotation.z = suena ? Math.sin(t * 70) * .05 : 0;
     if (suena !== celOn) { celOn = suena; dibujarCel(suena); celTex.needsUpdate = true; }
     ondas.forEach((o, i) => { const k = ((t * .9 + i * .5) % 1); o.scale.setScalar(.8 + k * 2.2); o.material.opacity = suena ? (1 - k) * .8 : 0; });
   });
@@ -253,23 +278,44 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   add(new THREE.BoxGeometry(.06, .45, .06), mat('#151c2c', { metalness: .85 }), 0, .25, -.06, vMon);
   add(new THREE.BoxGeometry(.32, .03, .26), mat('#151c2c', { metalness: .85 }), 0, .02, -.06, vMon);
 
-  // ---------- Silla gamer con luces en los bordes ----------
-  const silla = new THREE.Group(); silla.position.set(-1.75, 0, 2.35); silla.rotation.y = .95; sc.add(silla);
-  const cuero = mat('#14151c', { roughness: .55 });
-  add(new RoundedBoxGeometry(1.0, .16, .95, 3, .07), cuero, 0, 1.0, 0, silla);
-  const resp = new THREE.Group(); resp.position.set(0, 1.08, .42); resp.rotation.x = -.13; silla.add(resp);
-  add(new RoundedBoxGeometry(.92, 1.45, .2, 4, .1), cuero, 0, .75, 0, resp);
-  add(new RoundedBoxGeometry(.34, .2, .12, 2, .05), mat('#1d1f2a'), 0, 1.22, -.12, resp); // almohadón
-  for (const s of [-1, 1]) add(new RoundedBoxGeometry(.16, 1.0, .26, 3, .07), cuero, s * .45, .55, -.04, resp); // alas
-  // tira de luz que recorre el borde del respaldo
-  const curva = new THREE.CatmullRomCurve3([[-.47, .02], [-.52, .6], [-.44, 1.2], [-.3, 1.48], [0, 1.53], [.3, 1.48], [.44, 1.2], [.52, .6], [.47, .02]].map(([x, y]) => new THREE.Vector3(x, y, .11)));
+  // ---------- Silla gamer tipo "racing" con tiras LED en los bordes ----------
+  const silla = new THREE.Group(); silla.position.set(-1.35, 0, 1.75); silla.rotation.y = -.75; silla.scale.setScalar(.85); sc.add(silla);
+  const cuero = mat('#101119', { roughness: .32, metalness: .15 }), cuero2 = mat('#1a1c28', { roughness: .45 });
   const texTira = textura(256, 8, (x, w, h) => { const g = x.createLinearGradient(0, 0, w, 0); ['#4fc3ff', '#8b5cf6', '#ff4fd8', '#ffb36b', '#3ddc84', '#4fc3ff'].forEach((c, i, a) => g.addColorStop(i / (a.length - 1), c)); x.fillStyle = g; x.fillRect(0, 0, w, h); });
-  const tira = new THREE.Mesh(new THREE.TubeGeometry(curva, 80, .016, 6, false), new THREE.MeshBasicMaterial({ map: texTira, toneMapped: false })); resp.add(tira);
-  const tiraAsiento = new THREE.Mesh(new THREE.TorusGeometry(.47, .014, 6, 64), new THREE.MeshBasicMaterial({ map: texTira, toneMapped: false })); tiraAsiento.rotation.x = Math.PI / 2; tiraAsiento.scale.set(1, .95, 1); tiraAsiento.position.y = 1.08; silla.add(tiraAsiento);
+  const matTira = new THREE.MeshBasicMaterial({ map: texTira, toneMapped: false });
   animados.push(t => { texTira.offset.x = -t * .25; });
-  for (const s of [-1, 1]) { add(new THREE.BoxGeometry(.08, .3, .08), mat('#1d1f2a'), s * .5, 1.2, .05, silla); add(new RoundedBoxGeometry(.12, .05, .4, 2, .02), mat('#1d1f2a'), s * .5, 1.36, .02, silla); }
-  add(new THREE.CylinderGeometry(.045, .045, .6, 12), mat('#2a3142', { metalness: .9 }), 0, .62, 0, silla);
-  for (let i = 0; i < 5; i++) { const p = add(new THREE.BoxGeometry(.48, .05, .07), mat('#14151c', { metalness: .6 }), 0, .2, 0, silla); p.rotation.y = i / 5 * Math.PI * 2; p.translateX(.24); const r = add(new THREE.SphereGeometry(.045, 10, 8), mat('#0a0a0e'), 0, .06, 0, silla); r.position.set(Math.cos(-i / 5 * Math.PI * 2) * .46, .06, Math.sin(-i / 5 * Math.PI * 2) * .46); }
+  const tubo = (pts, padre, r = .018) => padre.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p))), 90, r, 6, false), matTira));
+  // silueta del respaldo: ancho en los hombros, cintura, cuello y cabecera
+  const perfil = [[-.33, 0], [-.4, .35], [-.46, .82], [-.42, 1.0], [-.3, 1.08], [-.24, 1.13], [-.3, 1.2], [-.32, 1.42], [-.22, 1.53], [0, 1.56], [.22, 1.53], [.32, 1.42], [.3, 1.2], [.24, 1.13], [.3, 1.08], [.42, 1.0], [.46, .82], [.4, .35], [.33, 0]];
+  const forma = new THREE.Shape(); perfil.forEach(([x, y], i) => i ? forma.lineTo(x, y) : forma.moveTo(x, y)); forma.closePath();
+  for (const s of [-1, 1]) { const h = new THREE.Path(); h.absellipse(s * .17, 1.02, .055, .03, 0, Math.PI * 2); forma.holes.push(h); } // ranuras de arnés
+  const resp = new THREE.Group(); resp.position.set(0, .98, .4); resp.rotation.x = -.14; silla.add(resp);
+  const geoResp = new THREE.ExtrudeGeometry(forma, { depth: .16, bevelEnabled: true, bevelThickness: .05, bevelSize: .045, bevelSegments: 3, curveSegments: 6 });
+  geoResp.translate(0, 0, -.08); add(geoResp, cuero, 0, 0, 0, resp);
+  add(new RoundedBoxGeometry(.5, .75, .07, 3, .03), cuero2, 0, .5, -.12, resp);          // panel central acolchado
+  add(new RoundedBoxGeometry(.3, .16, .1, 2, .04), cuero2, 0, 1.36, -.12, resp);         // almohadón de cabeza
+  add(new RoundedBoxGeometry(.4, .13, .12, 2, .05), cuero2, 0, .25, -.13, resp);         // almohadón lumbar
+  // la tira LED recorre todo el borde del respaldo (adelante y atrás para que se vea de cualquier ángulo)
+  const borde = perfil.filter((_, i) => i > 0 && i < perfil.length - 1);
+  for (const z of [-.135, .135]) tubo(borde.map(([x, y]) => [x * 1.1, y + (y > .5 ? .02 : 0), z]), resp);
+  // asiento con alas laterales
+  add(new RoundedBoxGeometry(.86, .13, .84, 3, .06), cuero, 0, .9, .02, silla);
+  add(new RoundedBoxGeometry(.5, .05, .7, 2, .02), cuero2, 0, .97, 0, silla);
+  for (const s of [-1, 1]) add(new RoundedBoxGeometry(.16, .14, .84, 3, .06), cuero, s * .37, 1.0, .02, silla);
+  tubo([[-.45, .97, .42], [-.47, .99, 0], [-.45, 1.03, -.38], [-.3, 1.0, -.45], [0, .97, -.46], [.3, 1.0, -.45], [.45, 1.03, -.38], [.47, .99, 0], [.45, .97, .42]], silla, .016);
+  // apoyabrazos
+  for (const s of [-1, 1]) {
+    add(new THREE.BoxGeometry(.06, .32, .08), mat('#191b25', { metalness: .6 }), s * .5, 1.08, .08, silla);
+    add(new RoundedBoxGeometry(.13, .055, .42, 2, .025), cuero2, s * .5, 1.26, .02, silla);
+  }
+  // pistón y base de 5 patas con ruedas
+  add(new THREE.CylinderGeometry(.075, .075, .12, 16), mat('#0b0c12', { metalness: .6 }), 0, .78, 0, silla);
+  add(new THREE.CylinderGeometry(.04, .04, .5, 12), mat('#9aa3b5', { metalness: .95, roughness: .2 }), 0, .5, 0, silla);
+  add(new THREE.CylinderGeometry(.07, .09, .18, 16), mat('#0b0c12'), 0, .26, 0, silla);
+  for (let i = 0; i < 5; i++) {
+    const a = i / 5 * Math.PI * 2, p = add(new THREE.BoxGeometry(.46, .05, .08), mat('#0d0e14', { metalness: .5, roughness: .3 }), Math.cos(a) * .23, .17, Math.sin(-a) * .23, silla); p.rotation.y = a; p.rotation.z = .08;
+    const r = add(new THREE.CylinderGeometry(.05, .05, .06, 14), mat('#07080b'), Math.cos(a) * .46, .055, Math.sin(-a) * .46, silla); r.rotation.x = Math.PI / 2; r.rotation.y = a;
+  }
 
   // ---------- Polvo flotando en la luz ----------
   const PN = celu ? 90 : 200, polvoG = new THREE.BufferGeometry(), pp = new Float32Array(PN * 3);
@@ -282,7 +328,8 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   const capa = document.createElement('div'); capa.id = 'marcas'; canvas.parentElement.appendChild(capa);
   const MARCAS = [
     { obj: cel, alto: .42, c: '#25d366', txt: celu ? '📱 ¡Te llaman! Escribime' : '📱 ¡Te están llamando! Escribime por WhatsApp', accion: () => window.open(whatsapp, '_blank', 'noopener') },
-    { obj: rob, alto: .55, c: '#4fc3ff', txt: '🤖 Hablá con Jarvis', accion: () => entrar('jarvis') }
+    { obj: rob, alto: .55, c: '#4fc3ff', txt: '🤖 Hablá con Jarvis', accion: () => entrar('jarvis') },
+    { obj: fri, alto: .55, c: '#ff5fd2', txt: '💬 Hablá con Friday', accion: () => entrar('friday') }
   ];
   const vTmp = new THREE.Vector3();
   MARCAS.forEach(m => { m.el = document.createElement('button'); m.el.className = 'marca'; m.el.style.setProperty('--c', m.c); m.el.innerHTML = `<i></i>${m.txt}`; m.el.onclick = m.accion; capa.appendChild(m.el); });
@@ -300,11 +347,11 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   // ---------- Cámara ----------
   const camBase = new THREE.Vector3(), mira = new THREE.Vector3(-.35, 1.65, -.2), miraBase = new THREE.Vector3();
   function encuadre() {
-    const w = canvas.clientWidth, h = canvas.clientHeight; r.setPixelRatio(calidad); comp.setPixelRatio(calidad); r.setSize(w, h, false); comp.setSize(w, h); bloom.setSize(Math.round(w * calidad / 2), Math.round(h * calidad / 2)); // el brillo se calcula a la mitad de resolución
+    const w = canvas.clientWidth, h = canvas.clientHeight; r.setPixelRatio(calidad); comp.setPixelRatio(calidad); r.setSize(w, h, false); comp.setSize(w, h); bloom.setSize(Math.round(w * calidad / brilloDiv), Math.round(h * calidad / brilloDiv)); // el brillo se calcula a la mitad de resolución
     cam.aspect = w / h; const vertical = w / h < 1;
     cam.fov = vertical ? 58 : 36; cam.updateProjectionMatrix();
-    camBase.set(vertical ? .9 : 2.4, vertical ? 2.7 : 2.75, vertical ? 9.6 : 8.6);
-    miraBase.set(vertical ? .55 : -.35, vertical ? 2.35 : 1.65, -.2);
+    camBase.set(vertical ? -.5 : -2.7, vertical ? 2.9 : 3.3, vertical ? 9.6 : 9.0);
+    miraBase.set(vertical ? .35 : .5, vertical ? 2.35 : 1.55, -.2);
     if (!zoom) { cam.position.copy(camBase); mira.copy(miraBase); }
   }
   let zoom = null; encuadre(); window.addEventListener('resize', encuadre);
@@ -319,12 +366,13 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
     ray.setFromCamera(p, cam);
     if (ray.intersectObject(cel, true).length) return window.open(whatsapp, '_blank', 'noopener');
     if (ray.intersectObject(rob, true).length) return entrar('jarvis');
+    if (ray.intersectObject(fri, true).length) return entrar('friday');
     if (ray.intersectObject(grupo, true).length || celu) entrar();
   });
   canvas.addEventListener('pointermove', e => {
     if (zoom) return;
     const p = new THREE.Vector2(e.clientX / canvas.clientWidth * 2 - 1, -(e.clientY / canvas.clientHeight) * 2 + 1);
-    ray.setFromCamera(p, cam); canvas.style.cursor = ray.intersectObjects([grupo, cel, rob], true).length ? 'pointer' : 'default';
+    ray.setFromCamera(p, cam); canvas.style.cursor = ray.intersectObjects([grupo, cel, rob, fri], true).length ? 'pointer' : 'default';
   });
   let appInicial = null;
   function entrar(app) {
@@ -356,8 +404,10 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
     comp.render();
     medida.n++; medida.t += dt;
     if (medida.t > 2) { const fps = medida.n / medida.t; medida.n = 0; medida.t = 0;
-      if (fps < 45 && calidad > .6) { calidad = Math.max(.6, calidad - .15); encuadre(); }
-      else if (fps < 30 && bloom.enabled && calidad <= .6) bloom.enabled = false; }
+      // primero se baja lo que no se nota (el brillo), y la nitidez nunca baja de la resolución real de la pantalla
+      if (fps < 50 && brilloDiv < 4) { brilloDiv = 4; encuadre(); }
+      else if (fps < 50 && calidad > PISO) { calidad = Math.max(PISO, calidad - .25); encuadre(); }
+      else if (fps < 30 && bloom.enabled) bloom.enabled = false; }
     if (!listo) { listo = true; alListo && alListo(); }
     requestAnimationFrame(bucle);
   }
