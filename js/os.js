@@ -34,6 +34,7 @@ export function iniciarOS() {
 function abrir(id, opciones = {}) {
   const app = APPS[id]; if (!app) return;
   cerrarInicio();
+  if (app.enlace) { window.open(app.enlace, '_blank', 'noopener'); return; }
   if (abiertas.has(id)) { const v = abiertas.get(id); v.el.classList.remove('min'); enfocar(id); if (opciones && app.alReabrir) app.alReabrir(v.ctx, opciones); return; }
   const el = document.createElement('div'); el.className = 'ventana';
   const W = innerWidth, H = innerHeight - 48;
@@ -92,6 +93,7 @@ function redimension(el) {
 function armarBarra() {
   $('#btn-inicio').onclick = e => { e.stopPropagation(); $('#inicio-menu').hidden ? abrirInicio() : cerrarInicio(); };
   $('#btn-musica').onclick = () => abrir('musica');
+  $('#btn-wa').onclick = () => abrir('whatsapp');
   const inp = $('#buscar-input');
   inp.addEventListener('focus', () => abrirInicio(inp.value));
   inp.addEventListener('input', () => abrirInicio(inp.value));

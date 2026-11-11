@@ -10,7 +10,7 @@ const AZUL = new THREE.Color('#4fc3ff'), FUC = new THREE.Color('#d63bb0'), VIO =
 const degrade = t => { t = ((t % 1) + 1) % 1; return t < .5 ? AZUL.clone().lerp(VIO, t * 2) : VIO.clone().lerp(FUC, (t - .5) * 2); };
 const ida = t => { t = ((t % 2) + 2) % 2; return t < 1 ? t : 2 - t; };
 
-export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
+export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   const r = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false });
   let calidad = Math.min(window.devicePixelRatio || 1, celu ? 1 : 1.25); r.setPixelRatio(calidad);
   r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.25;
@@ -141,7 +141,7 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
   const libroCol = ['#4fc3ff', '#d63bb0', '#8b5cf6', '#1f2a44'];
   for (let i = 0; i < 4; i++) add(new THREE.BoxGeometry(.07, .3 + (i % 2) * .06, .22), mat(libroCol[i]), -.85 + i * .08, 4.03 + (i % 2) * .03, -1.5);
   // mini robot (como el de tus bots)
-  const rob = new THREE.Group(); rob.position.set(-.25, 3.88, -1.5); sc.add(rob);
+  const rob = new THREE.Group(); rob.position.set(-.25, 3.88, -1.5); sc.add(rob); rob.scale.setScalar(1.25);
   add(new RoundedBoxGeometry(.22, .2, .18, 2, .04), mat('#2b6fe0', { metalness: .4 }), 0, .18, 0, rob);
   add(new THREE.BoxGeometry(.15, .045, .02), brillo(AZUL, 2.5), 0, .19, .1, rob);
   add(new RoundedBoxGeometry(.16, .14, .14, 2, .03), mat('#1d4fb0'), 0, .03, 0, rob);
@@ -230,6 +230,31 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
   sc.add(new THREE.Points(vaporG, new THREE.PointsMaterial({ color: '#cfe2ff', size: .05, transparent: true, opacity: .35, depthWrite: false })));
   animados.push((t, dt) => { for (let i = 0; i < vaporN; i++) { vv[i] = (vv[i] + dt * .25) % 1; const k = vv[i]; vp[i * 3] = -1.45 + Math.sin(t * 2 + i) * .03 * k; vp[i * 3 + 1] = 1.25 + k * .45; vp[i * 3 + 2] = .45 + Math.cos(t * 1.5 + i) * .03 * k; } vaporG.attributes.position.needsUpdate = true; });
 
+  // ---------- Celular sonando (WhatsApp) ----------
+  const cel = new THREE.Group(); cel.position.set(-.98, 1.27, .6); cel.rotation.set(1.05, .3, 0, 'YXZ'); cel.scale.setScalar(1.45); sc.add(cel);
+  const soporte = add(new THREE.BoxGeometry(.3, .05, .22), mat('#1b2130', { metalness: .7 }), -.98, 1.085, .52); soporte.rotation.y = .3;
+  add(new RoundedBoxGeometry(.24, .025, .46, 3, .03), mat('#0b0d12', { metalness: .7, roughness: .25 }), 0, 0, 0, cel);
+  const cc = document.createElement('canvas'); cc.width = 256; cc.height = 512; const cx = cc.getContext('2d');
+  function dibujarCel(on) {
+    const g = cx.createLinearGradient(0, 0, 0, 512); g.addColorStop(0, on ? '#0f5132' : '#07140e'); g.addColorStop(1, on ? '#075e54' : '#050a08'); cx.fillStyle = g; cx.fillRect(0, 0, 256, 512);
+    cx.textAlign = 'center'; cx.fillStyle = '#e8fff3'; cx.font = '600 22px Inter, Arial'; cx.fillText('WhatsApp · llamando…', 128, 70);
+    cx.fillStyle = '#25d366'; cx.beginPath(); cx.arc(128, 190, 70, 0, 7); cx.fill(); cx.fillStyle = '#fff'; cx.font = '800 54px Inter, Arial'; cx.fillText('CS', 128, 210);
+    cx.font = '700 28px Inter, Arial'; cx.fillText('Cristian Sabella', 128, 310); cx.font = '500 19px Inter, Arial'; cx.fillStyle = '#b8f5d5'; cx.fillText('Tocá para escribirle', 128, 345);
+    cx.fillStyle = '#e53935'; cx.beginPath(); cx.arc(70, 440, 34, 0, 7); cx.fill(); cx.fillStyle = '#25d366'; cx.beginPath(); cx.arc(186, 440, 34, 0, 7); cx.fill();
+    cx.fillStyle = '#fff'; cx.font = '32px sans-serif'; cx.fillText('✕', 70, 452); cx.fillText('✆', 186, 452);
+  }
+  dibujarCel(true);
+  const celTex = new THREE.CanvasTexture(cc); celTex.colorSpace = THREE.SRGBColorSpace;
+  const celPant = add(new THREE.PlaneGeometry(.21, .42), new THREE.MeshBasicMaterial({ map: celTex, toneMapped: false }), 0, .014, 0, cel); celPant.rotation.x = -Math.PI / 2;
+  const ondas = [0, 1].map(() => { const o = add(new THREE.RingGeometry(.2, .225, 48), new THREE.MeshBasicMaterial({ color: '#25d366', transparent: true, opacity: 0, toneMapped: false, depthWrite: false, side: THREE.DoubleSide }), 0, .016, 0, cel); o.rotation.x = -Math.PI / 2; return o; });
+  let celOn = true;
+  animados.push(t => {
+    const ciclo = t % 2.6, suena = ciclo < 1.5;
+    cel.position.x = -.98 + (suena ? Math.sin(t * 90) * .007 : 0); cel.rotation.z = suena ? Math.sin(t * 70) * .05 : 0;
+    if (suena !== celOn) { celOn = suena; dibujarCel(suena); celTex.needsUpdate = true; }
+    ondas.forEach((o, i) => { const k = ((t * .9 + i * .5) % 1); o.scale.setScalar(.8 + k * 2.2); o.material.opacity = suena ? (1 - k) * .8 : 0; });
+  });
+
   // ---------- Gabinete gamer ----------
   const gab = new THREE.Group(); gab.position.set(2.6, 1.06, -.42); gab.rotation.y = -.42; grupo.add(gab);
   add(new RoundedBoxGeometry(.88, 1.86, 1.28, 3, .04), mat('#06080e', { metalness: .7, roughness: .3 }), 0, .93, 0, gab);
@@ -281,6 +306,19 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
   sc.add(new THREE.Points(polvoG, new THREE.PointsMaterial({ color: '#bcd7ff', size: .018, transparent: true, opacity: .55, depthWrite: false })));
   animados.push((t, dt) => { for (let i = 0; i < PN; i++) { pp[i * 3 + 1] += dt * .04; pp[i * 3] += Math.sin(t * .3 + i) * dt * .02; if (pp[i * 3 + 1] > 4.6) pp[i * 3 + 1] = 0; } polvoG.attributes.position.needsUpdate = true; });
 
+  // ---------- Carteles flotantes que explican qué se puede tocar ----------
+  const capa = document.createElement('div'); capa.id = 'marcas'; canvas.parentElement.appendChild(capa);
+  const MARCAS = [
+    { obj: cel, alto: .42, c: '#25d366', txt: celu ? '📱 ¡Te llaman! Escribime' : '📱 ¡Te están llamando! Escribime por WhatsApp', accion: () => window.open(whatsapp, '_blank', 'noopener') },
+    { obj: rob, alto: .55, c: '#4fc3ff', txt: '🤖 Hablá con Jarvis', accion: () => entrar('jarvis') }
+  ];
+  const vTmp = new THREE.Vector3();
+  MARCAS.forEach(m => { m.el = document.createElement('button'); m.el.className = 'marca'; m.el.style.setProperty('--c', m.c); m.el.innerHTML = `<i></i>${m.txt}`; m.el.onclick = m.accion; capa.appendChild(m.el); });
+  function moverMarcas() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    MARCAS.forEach(m => { m.obj.getWorldPosition(vTmp); vTmp.y += m.alto; vTmp.project(cam); const mw = m.el.offsetWidth / 2 + 8; m.el.style.left = Math.max(mw, Math.min(w - mw, (vTmp.x + 1) / 2 * w)) + 'px'; m.el.style.top = ((-vTmp.y + 1) / 2 * h) + 'px'; });
+  }
+
   // ---------- Postproceso (brillo de las luces) ----------
   const comp = new EffectComposer(r, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: celu ? 0 : 2 }));
   comp.addPass(new RenderPass(sc, cam));
@@ -307,15 +345,19 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
     if (zoom) return;
     const p = new THREE.Vector2(e.clientX / canvas.clientWidth * 2 - 1, -(e.clientY / canvas.clientHeight) * 2 + 1);
     ray.setFromCamera(p, cam);
+    if (ray.intersectObject(cel, true).length) return window.open(whatsapp, '_blank', 'noopener');
+    if (ray.intersectObject(rob, true).length) return entrar('jarvis');
     if (ray.intersectObject(grupo, true).length || celu) entrar();
   });
   canvas.addEventListener('pointermove', e => {
     if (zoom) return;
     const p = new THREE.Vector2(e.clientX / canvas.clientWidth * 2 - 1, -(e.clientY / canvas.clientHeight) * 2 + 1);
-    ray.setFromCamera(p, cam); canvas.style.cursor = ray.intersectObject(grupo, true).length ? 'pointer' : 'default';
+    ray.setFromCamera(p, cam); canvas.style.cursor = ray.intersectObjects([grupo, cel, rob], true).length ? 'pointer' : 'default';
   });
-  function entrar() {
+  let appInicial = null;
+  function entrar(app) {
     if (zoom) return;
+    appInicial = app || null;
     zoom = { t: 0, desde: cam.position.clone(), miraDesde: mira.clone(), hasta: new THREE.Vector3(0, 2.07, cam.aspect < 1 ? 1.0 : 1.2), miraHasta: new THREE.Vector3(0, 2.07, -.55) };
     document.getElementById('entrada').classList.add('zoom');
   }
@@ -332,12 +374,13 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
     if (zoom) {
       zoom.t = Math.min(1, zoom.t + dt / 1.5); const k = suave(zoom.t);
       cam.position.lerpVectors(zoom.desde, zoom.hasta, k); mira.lerpVectors(zoom.miraDesde, zoom.miraHasta, k);
-      if (zoom.t >= 1 && !zoom.fin) { zoom.fin = true; alEntrar(); }
+      if (zoom.t >= 1 && !zoom.fin) { zoom.fin = true; alEntrar(appInicial); }
     } else {
       cam.position.x += (camBase.x + puntero.x * .5 - cam.position.x) * .04;
       cam.position.y += (camBase.y + puntero.y * .25 - cam.position.y) * .04;
     }
     cam.lookAt(mira);
+    if (!zoom) moverMarcas();
     comp.render();
     medida.n++; medida.t += dt;
     if (medida.t > 2) { const fps = medida.n / medida.t; medida.n = 0; medida.t = 0;

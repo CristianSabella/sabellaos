@@ -191,6 +191,42 @@ function appTerminal(cuerpo, ctx) {
   setTimeout(() => inp.focus(), 50);
 }
 
+// ---------- Chats con Jarvis y Friday (hablan con sus servidores reales en Cloudflare) ----------
+function appChat(servidor, base) {
+  return (cuerpo, ctx) => {
+    const bot = Object.assign({ nombre: base.nombre, colorPrincipal: base.color, placeholder: 'Escribí acá...' }, {});
+    let estado = null;
+    cuerpo.innerHTML = `<div class="chat" style="--bot:${base.color}"><div class="chat-cab"><span class="chat-av">🤖</span><div><b>${base.nombre}</b><small>● En línea</small></div></div>
+      <div class="chat-msgs"></div><form class="chat-form"><input placeholder="Escribí acá..." autocomplete="off" aria-label="Mensaje"><button aria-label="Enviar">➤</button></form></div>`;
+    const msgs = cuerpo.querySelector('.chat-msgs'), inp = cuerpo.querySelector('input'), raiz = cuerpo.querySelector('.chat');
+    const bajar = () => msgs.scrollTop = msgs.scrollHeight;
+    const agregar = (t, quien) => { const d = document.createElement('div'); d.className = 'chat-msg ' + quien; d.textContent = t; msgs.appendChild(d); bajar(); };
+    const quitarOps = () => msgs.querySelectorAll('.chat-ops').forEach(o => o.remove());
+    function opciones(ops) {
+      quitarOps(); if (!ops || !ops.length) return;
+      const c = document.createElement('div'); c.className = 'chat-ops';
+      ops.forEach(o => { const b = document.createElement('button'); b.type = 'button'; b.textContent = o.texto; if (o.url) { b.className = 'enlace'; b.onclick = () => window.open(o.url, '_blank', 'noopener'); } else b.onclick = () => enviar(o.texto, o.id); c.appendChild(b); });
+      msgs.appendChild(c); bajar();
+    }
+    function enviar(visible, real) {
+      if (visible) agregar(visible, 'yo'); quitarOps();
+      const esc = document.createElement('div'); esc.className = 'chat-esc'; esc.textContent = bot.nombre + ' está escribiendo...'; msgs.appendChild(esc); bajar();
+      fetch(servidor + '/api/mensaje', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado, texto: real || visible || 'hola' }) })
+        .then(r => { if (!r.ok) throw 0; return r.json(); })
+        .then(r => { estado = r.estado; esc.remove(); let i = 0; (function sig() { if (i < r.mensajes.length) { agregar(r.mensajes[i++], 'bot'); setTimeout(sig, 420); } else opciones(r.opciones); })(); })
+        .catch(() => { esc.remove(); agregar('Uy, no me pude conectar 😕. Probá de nuevo en un ratito.', 'bot'); opciones([{ id: 'menu', texto: 'Reintentar' }]); });
+    }
+    fetch(servidor + '/api/config').then(r => r.json()).then(c => {
+      Object.assign(bot, c); if (c.colorPrincipal) raiz.style.setProperty('--bot', c.colorPrincipal);
+      if (c.avatar) cuerpo.querySelector('.chat-av').textContent = c.avatar;
+      cuerpo.querySelector('.chat-cab b').textContent = c.nombre || base.nombre; if (c.placeholder) inp.placeholder = c.placeholder;
+    }).catch(() => {});
+    cuerpo.querySelector('form').onsubmit = e => { e.preventDefault(); const t = inp.value.trim(); if (!t) return; inp.value = ''; enviar(t); };
+    enviar(null, 'menu'); setTimeout(() => inp.focus(), 60);
+  };
+}
+const WHATSAPP = PERFIL.whatsapp + '?text=' + encodeURIComponent('¡Hola Cristian! Vi tu portfolio SabellaOS y quería hablar con vos.');
+
 // ---------- Registro ----------
 export const APPS = {
   proyectos: { nombre: 'Proyectos', icono: '📁', ancho: 980, alto: 640, render: appProyectos, buscar: 'portfolio trabajos' },
@@ -200,9 +236,12 @@ export const APPS = {
   musica: { nombre: 'Música', icono: '🎵', ancho: 460, alto: 470, render: appMusica, alCerrar: c => c.parar && c.parar(), buscar: 'neffex reproductor' },
   terminal: { nombre: 'Terminal', icono: '💻', ancho: 700, alto: 430, render: appTerminal, buscar: 'consola cmd' },
   contacto: { nombre: 'Contacto', icono: '✉️', ancho: 520, alto: 520, render: appContacto, buscar: 'email whatsapp linkedin' },
+  jarvis: { nombre: 'Jarvis', icono: '🤖', ancho: 420, alto: 600, render: appChat('https://jarvis.cristiansabella57.workers.dev', { nombre: 'Jarvis', color: '#1e6fd9' }), buscar: 'chatbot asistente bot' },
+  friday: { nombre: 'Friday', icono: '💬', ancho: 420, alto: 600, render: appChat('https://friday.cristiansabella57.workers.dev', { nombre: 'Friday', color: '#8b1d3f' }), buscar: 'chatbot asistente bot' },
+  whatsapp: { nombre: 'WhatsApp', icono: '📱', enlace: WHATSAPP, buscar: 'contacto mensaje celular' },
   'juego-2048': { nombre: '2048', icono: '🔢', ancho: 470, alto: 760, render: juegoIframe('juegos/2048.html'), buscar: 'juego' },
   'juego-sudoku': { nombre: 'Sudoku', icono: '🧩', ancho: 500, alto: 820, render: juegoIframe('juegos/sudoku.html'), buscar: 'juego' },
   'juego-buscaminas': { nombre: 'Buscaminas', icono: '💣', ancho: 520, alto: 820, render: juegoIframe('juegos/buscaminas.html'), buscar: 'juego minas' }
 };
-export const ESCRITORIO = ['proyectos', 'sobremi', 'cv', 'juegos', 'musica', 'terminal', 'contacto'];
-export const ANCLADAS = ['proyectos', 'terminal', 'musica', 'juegos'];
+export const ESCRITORIO = ['proyectos', 'sobremi', 'cv', 'juegos', 'musica', 'terminal', 'jarvis', 'friday', 'whatsapp', 'contacto'];
+export const ANCLADAS = ['proyectos', 'jarvis', 'friday', 'terminal', 'musica', 'juegos'];
