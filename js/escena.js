@@ -60,18 +60,11 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
   const corn = add(new THREE.BoxGeometry(40, .06, .06), brillo(VIO, 1.4), 0, 5.3, -1.6);
   animados.push(t => corn.material.emissive.copy(degrade(.55 + Math.sin(t * .3) * .2)));
   // ventana con la ciudad de noche
-  const texCiudad = textura(1024, 768, (x, w, h) => {
-    const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#0a1430'); g.addColorStop(.6, '#2a1748'); g.addColorStop(1, '#4a1d4f'); x.fillStyle = g; x.fillRect(0, 0, w, h);
-    for (let i = 0; i < 180; i++) { x.fillStyle = `rgba(255,255,255,${.3 + Math.random() * .7})`; x.fillRect(Math.random() * w, Math.random() * h * .55, 1.6, 1.6); }
-    x.fillStyle = '#f4f0ff'; x.shadowColor = '#cfe0ff'; x.shadowBlur = 40; x.beginPath(); x.arc(w * .78, h * .2, 46, 0, 7); x.fill(); x.shadowBlur = 0;
-    for (let b = 0; b < 26; b++) {
-      const bw = 34 + Math.random() * 60, bh = 140 + Math.random() * 360, bx = b * 40 - 20, by = h - bh;
-      x.fillStyle = `hsl(235,30%,${7 + Math.random() * 5}%)`; x.fillRect(bx, by, bw, bh);
-      for (let yy = by + 10; yy < h - 8; yy += 14) for (let xx = bx + 6; xx < bx + bw - 6; xx += 11) if (Math.random() < .32) { x.fillStyle = Math.random() < .7 ? '#ffd38a' : (Math.random() < .5 ? '#7fd3ff' : '#ff8ad8'); x.globalAlpha = .55 + Math.random() * .45; x.fillRect(xx, yy, 5, 7); x.globalAlpha = 1; }
-    }
-  });
+  // vista de la ciudad de noche (foto)
+  const texCiudad = new THREE.TextureLoader().load('img/ciudad.jpg'); texCiudad.colorSpace = THREE.SRGBColorSpace;
+  texCiudad.repeat.set(.75, 1); texCiudad.offset.set(.125, 0); // la foto es más ancha que la ventana: se recorta a los costados
   const ventanaVid = add(new THREE.PlaneGeometry(2.2, 1.65), new THREE.MeshBasicMaterial({ map: texCiudad, toneMapped: false }), -4.0, 3.0, -1.66);
-  ventanaVid.material.color.setScalar(.95);
+  ventanaVid.material.color.setScalar(1.05);
   for (const [w, h, x, y] of [[2.36, .08, -4.0, 3.86], [2.36, .08, -4.0, 2.14], [.08, 1.8, -5.14, 3.0], [.08, 1.8, -2.86, 3.0], [.05, 1.65, -4.0, 3.0], [2.2, .04, -4.0, 3.0]]) add(new THREE.BoxGeometry(w, h, .1), mat('#e8e6f0', { roughness: .5 }), x, y, -1.62);
   add(new THREE.BoxGeometry(2.5, .06, .26), mat('#e8e6f0'), -4.0, 2.1, -1.52);
   // cortinas
