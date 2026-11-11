@@ -439,7 +439,10 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
     if (!listo) { listo = true; alListo && alListo(); }
     requestAnimationFrame(bucle);
   }
-  requestAnimationFrame(bucle);
+  // Antes de mostrar la habitación se preparan los shaders y se suben las texturas a la placa de video,
+  // así no hay tirones en los primeros segundos (mientras tanto se ve la pantalla de carga)
+  sc.traverse(o => { const ms = o.material ? [].concat(o.material) : []; ms.forEach(m => ['map', 'emissiveMap'].forEach(k => { if (m[k]) try { r.initTexture(m[k]); } catch (e) {} })); });
+  (r.compileAsync ? r.compileAsync(sc, cam).catch(() => {}) : Promise.resolve()).then(() => { antes = performance.now(); requestAnimationFrame(bucle); });
 
   return {
     entrar,

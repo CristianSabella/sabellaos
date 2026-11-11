@@ -1,6 +1,6 @@
 // Arranque de SabellaOS
-import { iniciarOS, OS } from './os.js?v=20261110f';
-import { Musica, APPS } from './apps.js?v=20261110f';
+import { iniciarOS, OS } from './os.js?v=20261110h';
+import { Musica, APPS } from './apps.js?v=20261110h';
 
 const $ = s => document.querySelector(s);
 const celu = () => innerWidth < 760 || (matchMedia('(pointer: coarse)').matches && Math.min(innerWidth, innerHeight) < 820);
@@ -30,7 +30,7 @@ $('#saltar').onclick = () => entrarAlOS();
 $('#entrar').onclick = () => escena ? escena.entrar() : entrarAlOS();
 
 // La escena 3D se carga aparte: si la compu o el celular no la soportan, se entra directo
-import('./escena.js?v=20261110f').then(({ iniciarEscena }) => {
+import('./escena.js?v=20261110h').then(({ iniciarEscena }) => {
   escena = iniciarEscena({
     canvas: $('#escena'), celu: celu(),
     alEntrar: entrarAlOS, whatsapp: APPS.whatsapp.enlace,

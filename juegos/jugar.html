@@ -28,6 +28,8 @@
   const app = document.getElementById('juegos-app');
   app.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
   window.focus();
+  // cada toque en el juego le devuelve el teclado (el juego 3D frena el foco al tocar el lienzo)
+  document.addEventListener('pointerdown', () => window.focus(), true);
 </script>
 </body>
 </html>

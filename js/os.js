@@ -1,6 +1,6 @@
 // SabellaOS: escritorio, ventanas, barra de tareas y menú inicio
-import { APPS, ESCRITORIO, ANCLADAS } from './apps.js?v=20261110f';
-import { PERFIL, PROYECTOS } from './datos.js?v=20261110f';
+import { APPS, ESCRITORIO, ANCLADAS } from './apps.js?v=20261110h';
+import { PERFIL, PROYECTOS } from './datos.js?v=20261110h';
 
 const $ = s => document.querySelector(s);
 const esCelu = () => document.body.classList.contains('celu');
@@ -51,8 +51,8 @@ function abrir(id, opciones = {}) {
   abiertas.set(id, { el, app, ctx });
   el.querySelector('.x').onclick = () => cerrar(id);
   el.querySelector('.b-min').onclick = () => { el.classList.add('min'); marcarTareas(); };
-  el.querySelector('.b-max').onclick = () => el.classList.toggle('max');
-  el.querySelector('.v-titulo').addEventListener('dblclick', e => { if (!e.target.closest('button')) el.classList.toggle('max'); });
+  el.querySelector('.b-max').onclick = () => { el.classList.toggle('max'); enfocar(id); };
+  el.querySelector('.v-titulo').addEventListener('dblclick', e => { if (!e.target.closest('button')) { el.classList.toggle('max'); enfocar(id); } });
   el.addEventListener('pointerdown', () => enfocar(id), true);
   arrastre(el); redimension(el);
   app.render(cuerpo, ctx);
@@ -67,6 +67,8 @@ function cerrar(id) {
 function enfocar(id) {
   abiertas.forEach((v, k) => v.el.classList.toggle('activa', k === id));
   const v = abiertas.get(id); if (v) v.el.style.zIndex = ++zTop;
+  // si la ventana tiene un juego/app en iframe, el teclado va para él (si no, se queda en el botón que se tocó)
+  const f = v && v.el.querySelector('iframe'); if (f) setTimeout(() => { try { f.contentWindow.focus(); } catch (e) {} }, 0);
   marcarTareas();
 }
 function arrastre(el) {
@@ -206,8 +208,9 @@ function lluvia() {
   function medir() { cv.width = innerWidth; cv.height = innerHeight; col = Math.floor(cv.width / 18); gotas = Array.from({ length: col }, () => Math.random() * cv.height); }
   medir(); addEventListener('resize', medir);
   setInterval(() => {
-    if (document.getElementById('os').hidden) return;
+    // la lluvia de fondo se frena si no se ve (pestaña oculta o una ventana maximizada tapándola): menos trabajo para la PC
+    if (document.getElementById('os').hidden || document.hidden || document.querySelector('.ventana.max:not(.min)')) return;
     x.fillStyle = 'rgba(5,11,20,.18)'; x.fillRect(0, 0, cv.width, cv.height); x.font = '15px monospace';
     for (let i = 0; i < col; i++) { x.fillStyle = i % 3 ? '#1f6f99' : '#a1007e'; x.fillText(Math.random() < .5 ? '0' : '1', i * 18, gotas[i]); gotas[i] += 18; if (gotas[i] > cv.height && Math.random() > .975) gotas[i] = 0; }
-  }, 70);
+  }, 80);
 }
