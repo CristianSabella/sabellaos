@@ -76,9 +76,9 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
 
   // ventana con la ciudad de noche y cortinas
   const texCiudad = new THREE.TextureLoader().load('img/ciudad.jpg'); texCiudad.colorSpace = THREE.SRGBColorSpace; texCiudad.repeat.set(.75, 1); texCiudad.offset.set(.125, 0);
-  const vent = add(new THREE.PlaneGeometry(1.7, 2.1), new THREE.MeshBasicMaterial({ map: texCiudad, toneMapped: false }), -4.15, 3.25, -1.66); vent.material.color.setScalar(1.05);
-  for (const [w, h, x, y] of [[1.86, .08, -4.15, 4.33], [1.86, .08, -4.15, 2.17], [.08, 2.24, -5.04, 3.25], [.08, 2.24, -3.26, 3.25], [.05, 2.1, -4.15, 3.25]]) add(new THREE.BoxGeometry(w, h, .1), mat('#151827', { roughness: .4 }), x, y, -1.62);
-  for (const lado of [-1, 1]) for (let k = 0; k < 6; k++) add(new THREE.BoxGeometry(.12, 3.6, .05), mat(k % 2 ? '#26304d' : '#2c385a', { roughness: .95 }), -4.15 + lado * (.95 + k * .06), 2.45, -1.52 + (k % 2) * .05);
+  const vent = add(new THREE.PlaneGeometry(1.7, 2.1), new THREE.MeshBasicMaterial({ map: texCiudad, toneMapped: false }), 4.45, 3.25, -1.66); vent.material.color.setScalar(1.05);
+  for (const [w, h, x, y] of [[1.86, .08, 4.45, 4.33], [1.86, .08, 4.45, 2.17], [.08, 2.24, 3.56, 3.25], [.08, 2.24, 5.34, 3.25], [.05, 2.1, 4.45, 3.25]]) add(new THREE.BoxGeometry(w, h, .1), mat('#151827', { roughness: .4 }), x, y, -1.62);
+  for (const lado of [-1, 1]) for (let k = 0; k < 6; k++) add(new THREE.BoxGeometry(.12, 3.6, .05), mat(k % 2 ? '#26304d' : '#2c385a', { roughness: .95 }), 4.45 + lado * (.95 + k * .06), 2.45, -1.52 + (k % 2) * .05);
 
   // dos cuadros con arte propio
   function cuadro(dibujar, x, y) {
@@ -223,8 +223,8 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   animados.push((t, dt) => { for (let i = 0; i < vaporN; i++) { vv[i] = (vv[i] + dt * .25) % 1; const k = vv[i]; vp[i * 3] = -1.45 + Math.sin(t * 2 + i) * .03 * k; vp[i * 3 + 1] = 1.25 + k * .45; vp[i * 3 + 2] = .45 + Math.cos(t * 1.5 + i) * .03 * k; } vaporG.attributes.position.needsUpdate = true; });
 
   // ---------- Celular sonando (WhatsApp) ----------
-  const cel = new THREE.Group(); cel.position.set(2.35, 1.27, .5); cel.rotation.set(1.05, -.45, 0, 'YXZ'); cel.scale.setScalar(1.45); sc.add(cel);
-  const soporte = add(new THREE.BoxGeometry(.3, .05, .22), mat('#1b2130', { metalness: .7 }), 2.35, 1.085, .42); soporte.rotation.y = -.45;
+  const cel = new THREE.Group(); cel.position.set(1.4, 1.27, -.1); cel.rotation.set(1.05, -.45, 0, 'YXZ'); cel.scale.setScalar(1.45); sc.add(cel);
+  const soporte = add(new THREE.BoxGeometry(.3, .05, .22), mat('#1b2130', { metalness: .7 }), 1.4, 1.085, -.18); soporte.rotation.y = -.45;
   add(new RoundedBoxGeometry(.24, .025, .46, 3, .03), mat('#0b0d12', { metalness: .7, roughness: .25 }), 0, 0, 0, cel);
   const cc = document.createElement('canvas'); cc.width = 256; cc.height = 512; const cx = cc.getContext('2d');
   function dibujarCel(on) {
@@ -242,29 +242,57 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   let celOn = true;
   animados.push(t => {
     const ciclo = t % 2.6, suena = ciclo < 1.5;
-    cel.position.x = 2.35 + (suena ? Math.sin(t * 90) * .007 : 0); cel.rotation.z = suena ? Math.sin(t * 70) * .05 : 0;
+    cel.position.x = 1.4 + (suena ? Math.sin(t * 90) * .007 : 0); cel.rotation.z = suena ? Math.sin(t * 70) * .05 : 0;
     if (suena !== celOn) { celOn = suena; dibujarCel(suena); celTex.needsUpdate = true; }
     ondas.forEach((o, i) => { const k = ((t * .9 + i * .5) % 1); o.scale.setScalar(.8 + k * 2.2); o.material.opacity = suena ? (1 - k) * .8 : 0; });
   });
 
-  // ---------- Gabinete blanco con vidrio y ventiladores RGB ----------
-  const gab = new THREE.Group(); gab.position.set(2.85, 1.06, -.75); gab.rotation.y = -.3; grupo.add(gab);
-  add(new RoundedBoxGeometry(.85, 1.25, 1.1, 3, .04), mat('#b9bfcc', { metalness: .1, roughness: .7 }), 0, .63, 0, gab);
-  add(new THREE.BoxGeometry(.015, 1.1, .95), new THREE.MeshPhysicalMaterial({ color: '#dfe8ff', transparent: true, opacity: .16, roughness: .05 }), -.43, .63, 0, gab);
-  add(new THREE.BoxGeometry(.02, 1.05, .9), mat('#aab0bd', { roughness: .7 }), .3, .63, -.02, gab);
+  // ---------- Gabinete blanco tipo pecera: frente y lateral de vidrio, ventiladores RGB y componentes adentro ----------
+  const gab = new THREE.Group(); gab.position.set(2.8, 1.06, -.75); gab.rotation.y = .35; gab.scale.setScalar(1.22); grupo.add(gab);
+  const W = .5, H = 1.08, D = .98, blanco = mat('#aeb3c0', { roughness: .6, metalness: .1 });
+  const vidrio = new THREE.MeshPhysicalMaterial({ color: '#dfe9ff', transparent: true, opacity: .14, roughness: .05, metalness: 0, depthWrite: false });
+  // estructura: techo, piso, fondo y lateral derecho macizos; marcos blancos en los bordes
+  add(new THREE.BoxGeometry(W, .035, D), blanco, 0, H - .018, 0, gab);
+  add(new THREE.BoxGeometry(W, .06, D), blanco, 0, .03, 0, gab);
+  add(new THREE.BoxGeometry(W, H, .03), blanco, 0, H / 2, -D / 2 + .015, gab);
+  add(new THREE.BoxGeometry(.02, H, D), blanco, W / 2 - .01, H / 2, 0, gab);
+  for (const [x, z] of [[-W / 2 + .015, D / 2 - .015], [W / 2 - .015, D / 2 - .015], [-W / 2 + .015, -D / 2 + .015]]) add(new THREE.BoxGeometry(.03, H, .03), blanco, x, H / 2, z, gab);
+  for (const s of [-1, 1]) add(new THREE.CylinderGeometry(.025, .025, .03, 10), mat('#c5cad6'), s * .18, -.0, s * .38, gab);
+  // vidrios: frente y lateral izquierdo
+  add(new THREE.BoxGeometry(W - .03, H - .1, .008), vidrio, 0, H / 2, D / 2 - .004, gab);
+  add(new THREE.BoxGeometry(.008, H - .1, D - .03), vidrio, -W / 2 + .004, H / 2, 0, gab);
+  // placa madre blanca contra el lateral derecho
+  add(new THREE.BoxGeometry(.015, .78, .62), mat('#f4f5f8', { roughness: .6 }), W / 2 - .035, .62, -.1, gab);
+  // cooler del procesador con aro de luz
+  const coolerAro = add(new THREE.TorusGeometry(.105, .016, 10, 40), brillo(AZUL, 2.6), W / 2 - .09, .78, -.08, gab); coolerAro.rotation.y = Math.PI / 2;
+  add(new THREE.CylinderGeometry(.1, .1, .05, 28), mat('#f0f2f7'), W / 2 - .085, .78, -.08, gab).rotation.z = Math.PI / 2;
+  // memorias RAM con luz
+  for (let i = 0; i < 2; i++) { add(new THREE.BoxGeometry(.03, .18, .015), mat('#f0f2f7'), W / 2 - .06, .8, .1 + i * .035, gab); add(new THREE.BoxGeometry(.032, .02, .017), brillo(FUC, 2.4), W / 2 - .06, .9, .1 + i * .035, gab); }
+  // placa de video blanca con tira LED
+  add(new THREE.BoxGeometry(.2, .06, .55), mat('#f2f3f7', { roughness: .4 }), W / 2 - .15, .45, -.05, gab);
+  add(new THREE.BoxGeometry(.008, .012, .52), brillo(VIO, 2.4), W / 2 - .252, .45, -.05, gab);
+  // fuente (cubierta abajo)
+  add(new THREE.BoxGeometry(W - .05, .16, D - .06), blanco, 0, .14, 0, gab);
+  add(new THREE.BoxGeometry(.005, .012, D - .1), brillo(AZUL, 1.8), -W / 2 + .03, .22, 0, gab);
+  // 2 ventiladores grandes al frente + 1 atrás
   const aspas = [];
-  for (let i = 0; i < 2; i++) {
-    const col = i ? FUC : AZUL;
-    const aro = add(new THREE.TorusGeometry(.2, .03, 12, 48), brillo(col, 2.6), 0, .88 - i * .5, .555, gab);
-    const rotor = new THREE.Group(); rotor.position.set(0, .88 - i * .5, .55); gab.add(rotor);
-    for (let k = 0; k < 7; k++) { const a = add(new THREE.BoxGeometry(.15, .04, .008), new THREE.MeshStandardMaterial({ color: '#f5f5fa', emissive: col, emissiveIntensity: .45 }), 0, 0, 0, rotor); a.rotation.z = k / 7 * Math.PI * 2; a.translateX(.09); a.rotation.x = .25; }
-    aspas.push(rotor);
-    animados.push(t => { aro.material.emissive.copy(degrade((i ? .9 : .05) + Math.sin(t * .5) * .08)); });
-  }
-  for (let i = 0; i < 2; i++) { const a = add(new THREE.TorusGeometry(.16, .025, 10, 40), brillo(i ? FUC : VIO, 2.4), -.38, .85 - i * .42, .05, gab); a.rotation.y = Math.PI / 2; }
-  add(new THREE.BoxGeometry(.45, .1, .6), mat('#9aa1b0', { roughness: .7 }), -.08, .45, -.05, gab);
-  add(new THREE.BoxGeometry(.45, .012, .56), brillo(FUC, 2), -.08, .505, -.05, gab);
-  animados.push((t, dt) => aspas.forEach((a, i) => a.rotation.z -= dt * (7 + i)));
+  const ventilador = (y, z, rotY, col) => {
+    const v = new THREE.Group(); v.position.set(0, y, z); v.rotation.y = rotY; gab.add(v);
+    const aro = add(new THREE.TorusGeometry(.16, .022, 10, 48), brillo(col, 1.7), 0, 0, 0, v);
+    add(new THREE.TorusGeometry(.115, .012, 8, 40), brillo(col, 1.0), 0, 0, .005, v);
+    const rotor = new THREE.Group(); v.add(rotor);
+    add(new THREE.CylinderGeometry(.035, .035, .03, 16), mat('#f5f6fa'), 0, 0, 0, rotor).rotation.x = Math.PI / 2;
+    for (let k = 0; k < 9; k++) { const a = add(new THREE.BoxGeometry(.1, .035, .006), new THREE.MeshStandardMaterial({ color: '#f7f8fc', emissive: col, emissiveIntensity: .15, transparent: true, opacity: .85 }), 0, 0, 0, rotor); a.rotation.z = k / 9 * Math.PI * 2; a.translateX(.07); a.rotation.x = .3; }
+    aspas.push(rotor); return aro;
+  };
+  const aro1 = ventilador(.79, D / 2 - .05, 0, AZUL), aro2 = ventilador(.43, D / 2 - .05, 0, FUC);
+  ventilador(.79, -D / 2 + .06, Math.PI, VIO);
+  animados.push((t, dt) => {
+    aspas.forEach((a, i) => a.rotation.z -= dt * (8 + i));
+    aro1.material.emissive.copy(degrade(.05 + Math.sin(t * .5) * .1)); aro2.material.emissive.copy(degrade(.9 + Math.sin(t * .5) * .08));
+    coolerAro.material.emissive.copy(degrade(t * .1));
+  });
+  // luz que sale de adentro del gabinete
 
   // segundo monitor vertical con el chat de Jarvis
   const vc = document.createElement('canvas'); vc.width = 256; vc.height = 448; const vx = vc.getContext('2d');
