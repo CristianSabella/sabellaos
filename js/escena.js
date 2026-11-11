@@ -11,8 +11,8 @@ const degrade = t => { t = ((t % 1) + 1) % 1; return t < .5 ? AZUL.clone().lerp(
 const ida = t => { t = ((t % 2) + 2) % 2; return t < 1 ? t : 2 - t; };
 
 export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
-  const r = new THREE.WebGLRenderer({ canvas, antialias: !celu, powerPreference: 'high-performance' });
-  r.setPixelRatio(Math.min(window.devicePixelRatio || 1, celu ? 1.25 : 1.5));
+  const r = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false });
+  let calidad = Math.min(window.devicePixelRatio || 1, celu ? 1 : 1.25); r.setPixelRatio(calidad);
   r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.25;
   const sc = new THREE.Scene(); sc.background = new THREE.Color('#070b16'); sc.fog = new THREE.Fog('#070b16', 14, 30);
   const cam = new THREE.PerspectiveCamera(36, 1, .05, 60);
@@ -27,11 +27,9 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
   sc.add(new THREE.HemisphereLight('#5a6ea8', '#120c18', 1.15));
   const lLampara = new THREE.PointLight('#ffb36b', 16, 9, 1.6); lLampara.position.set(-4.1, 3.9, 1.2); sc.add(lLampara);
   const lLuna = new THREE.PointLight('#7fb2ff', 10, 9, 1.6); lLuna.position.set(-3.6, 3.2, -.6); sc.add(lLuna);
-  const lTecho = new THREE.PointLight('#a78bfa', 8, 12, 1.4); lTecho.position.set(0, 5.6, 1.5); sc.add(lTecho);
   const lFuc = new THREE.PointLight(FUC, 26, 13); lFuc.position.set(3.4, 2.6, .9); sc.add(lFuc);
   const lAzul = new THREE.PointLight(AZUL, 24, 13); lAzul.position.set(-3.2, 2.8, 1.2); sc.add(lAzul);
-  const lPant = new THREE.PointLight('#8fb4ff', 5, 4.5); lPant.position.set(0, 1.9, .5); sc.add(lPant);
-  const sol = new THREE.DirectionalLight('#a9b8ff', .45); sol.position.set(2, 6, 7); sc.add(sol);
+  const sol = new THREE.DirectionalLight('#b3a6ff', .7); sol.position.set(1, 6, 7); sc.add(sol);
 
   // ---------- Habitación ----------
   function textura(w, h, dibujar, rx = 1, ry = 1) {
@@ -170,38 +168,42 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
   for (const x of [-3.1, 3.1]) add(new THREE.BoxGeometry(.1, .94, 1.9), mat('#0a0e18', { metalness: .6 }), x, .47, -.25);
 
   // ---------- Monitor curvo con SabellaOS adentro (dibujado en vivo) ----------
-  const SW = 1400, SH = 504;
-  const scv = document.createElement('canvas'); scv.width = SW; scv.height = SH; const s = scv.getContext('2d');
-  const pantTex = new THREE.CanvasTexture(scv); pantTex.colorSpace = THREE.SRGBColorSpace; pantTex.wrapS = THREE.RepeatWrapping; pantTex.repeat.x = -1; pantTex.offset.x = 1; pantTex.anisotropy = 8;
-  const gotas = Array.from({ length: 90 }, () => [Math.random() * SW, Math.random() * SH, .4 + Math.random()]);
+  const SW = 1400, SH = 504, ESC = celu ? .55 : .72; // se dibuja más chico: menos trabajo para la placa de video
+  const scv = document.createElement('canvas'); scv.width = Math.round(SW * ESC); scv.height = Math.round(SH * ESC); const s = scv.getContext('2d');
+  const pantTex = new THREE.CanvasTexture(scv); pantTex.colorSpace = THREE.SRGBColorSpace; pantTex.wrapS = THREE.RepeatWrapping; pantTex.repeat.x = -1; pantTex.offset.x = 1; pantTex.anisotropy = 4; pantTex.generateMipmaps = false; pantTex.minFilter = THREE.LinearFilter;
+  const gotas = Array.from({ length: 50 }, () => [Math.random() * SW, Math.random() * SH, .4 + Math.random()]);
   const lineasTerm = ['coti@sabellaos:~$ ayuda', '  proyectos  cv  juegos  contacto  stack', 'coti@sabellaos:~$ stack', '  C# · .NET · Flutter · SQL Server · JS', 'coti@sabellaos:~$ jugar arena'];
-  function dibujarPantalla(t) {
+  // la parte fija de la pantalla se dibuja UNA sola vez
+  const base = document.createElement('canvas'); base.width = scv.width; base.height = scv.height;
+  (function dibujarBase() {
+    const s = base.getContext('2d'); s.setTransform(ESC, 0, 0, ESC, 0, 0);
     const g = s.createLinearGradient(0, 0, SW, SH); g.addColorStop(0, '#0b2a44'); g.addColorStop(.5, '#0a0f22'); g.addColorStop(1, '#3a0f3a'); s.fillStyle = g; s.fillRect(0, 0, SW, SH);
-    s.font = '600 14px monospace'; s.fillStyle = 'rgba(79,195,255,.18)';
-    gotas.forEach(d => { d[1] += d[2] * 3; if (d[1] > SH) d[1] = -10; s.fillText(Math.random() < .5 ? '0' : '1', d[0], d[1]); });
     s.textAlign = 'center'; s.font = '800 92px Inter, Arial'; const lg = s.createLinearGradient(450, 0, 950, 0); lg.addColorStop(0, '#4fc3ff'); lg.addColorStop(.5, '#a78bfa'); lg.addColorStop(1, '#ff5fd2'); s.fillStyle = lg; s.fillText('SabellaOS', SW / 2, 230); s.textAlign = 'left';
-    // íconos
     ['📁', '👤', '📄', '🎮', '🎵', '💻'].forEach((ic, i) => { s.fillStyle = 'rgba(79,195,255,.18)'; s.fillRect(22, 18 + i * 66, 50, 50); s.font = '30px sans-serif'; s.fillText(ic, 31, 54 + i * 66); });
-    // ventana de música con barras
     const wx = 1020, wy = 30, ww = 350, wh = 190;
     s.fillStyle = 'rgba(10,18,32,.92)'; s.fillRect(wx, wy, ww, wh); s.fillStyle = 'rgba(214,59,176,.35)'; s.fillRect(wx, wy, ww, 24);
     s.fillStyle = '#e6f4ff'; s.font = '600 14px Inter, Arial'; s.fillText('🎵 Música', wx + 10, wy + 17);
-    for (let i = 0; i < 28; i++) { const h = 20 + Math.abs(Math.sin(t * 3 + i * .5) * Math.sin(t * 1.3 + i * .21)) * 120; const bg = s.createLinearGradient(0, wy + 175 - h, 0, wy + 175); bg.addColorStop(0, '#ff5fd2'); bg.addColorStop(1, '#4fc3ff'); s.fillStyle = bg; s.fillRect(wx + 14 + i * 11.6, wy + 175 - h, 8, h); }
-    // terminal
     const tx = 860, ty = 270, tw = 480, th = 160;
     s.fillStyle = 'rgba(4,8,15,.95)'; s.fillRect(tx, ty, tw, th); s.fillStyle = 'rgba(79,195,255,.3)'; s.fillRect(tx, ty, tw, 22);
     s.fillStyle = '#e6f4ff'; s.font = '600 13px Inter, Arial'; s.fillText('💻 Terminal', tx + 10, ty + 16);
-    s.font = '500 14px monospace'; const n = Math.floor(t * 1.2) % (lineasTerm.length + 3);
-    lineasTerm.slice(0, Math.min(n, lineasTerm.length)).forEach((l, i) => { s.fillStyle = l.startsWith('coti') ? '#3ddc84' : '#c8e6ff'; s.fillText(l, tx + 12, ty + 44 + i * 22); });
-    // proyectos
     s.fillStyle = 'rgba(10,18,32,.92)'; s.fillRect(110, 270, 560, 190); s.fillStyle = 'rgba(79,195,255,.3)'; s.fillRect(110, 270, 560, 22);
     s.fillStyle = '#e6f4ff'; s.fillText('📁 Proyectos', 120, 286);
     for (let i = 0; i < 4; i++) { const cg2 = s.createLinearGradient(0, 300, 0, 400); cg2.addColorStop(0, i % 2 ? '#4fc3ff' : '#d63bb0'); cg2.addColorStop(1, '#0a1220'); s.fillStyle = cg2; s.fillRect(124 + i * 135, 304, 120, 80); s.fillStyle = '#e6f4ff'; s.font = '600 13px Inter'; s.fillText(['DyNamo', 'Atelier', 'MAREA', 'Arena'][i], 128 + i * 135, 404); }
-    // barra de tareas
     s.fillStyle = 'rgba(6,12,22,.95)'; s.fillRect(0, SH - 34, SW, 34);
     const bgr = s.createLinearGradient(0, 0, 30, 30); bgr.addColorStop(0, '#4fc3ff'); bgr.addColorStop(1, '#d63bb0'); s.fillStyle = bgr; s.fillRect(10, SH - 28, 22, 22);
     s.fillStyle = 'rgba(255,255,255,.08)'; s.fillRect(44, SH - 34, 230, 34); s.fillStyle = '#8fa9c4'; s.font = '13px Inter'; s.fillText('🔍 Escribí aquí para buscar', 54, SH - 12);
-    const d = new Date(); s.fillStyle = '#e6f4ff'; s.textAlign = 'right'; s.fillText(d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }), SW - 14, SH - 12); s.textAlign = 'left';
+  })();
+  const barraGrad = (() => { const g = s.createLinearGradient(0, 85, 0, 205); g.addColorStop(0, '#ff5fd2'); g.addColorStop(1, '#4fc3ff'); return g; })();
+  // lo que se mueve: lluvia de números, barras de música, terminal y reloj
+  function dibujarPantalla(t) {
+    s.setTransform(1, 0, 0, 1, 0, 0); s.drawImage(base, 0, 0); s.setTransform(ESC, 0, 0, ESC, 0, 0);
+    s.font = '600 14px monospace'; s.fillStyle = 'rgba(79,195,255,.18)';
+    gotas.forEach(d => { d[1] += d[2] * 5; if (d[1] > SH) d[1] = -10; if (d[0] > 90 && (d[0] < 100 || d[0] > 680) && d[1] < 470) s.fillText(d[2] > .9 ? '1' : '0', d[0], d[1]); });
+    s.fillStyle = barraGrad;
+    for (let i = 0; i < 28; i++) { const h = 20 + Math.abs(Math.sin(t * 3 + i * .5) * Math.sin(t * 1.3 + i * .21)) * 120; s.fillRect(1034 + i * 11.6, 205 - h, 8, h); }
+    s.font = '500 14px monospace'; const n = Math.floor(t * 1.2) % (lineasTerm.length + 3);
+    lineasTerm.slice(0, Math.min(n, lineasTerm.length)).forEach((l, i) => { s.fillStyle = l.startsWith('coti') ? '#3ddc84' : '#c8e6ff'; s.fillText(l, 872, 314 + i * 22); });
+    s.fillStyle = '#e6f4ff'; s.font = '13px Inter'; s.textAlign = 'right'; s.fillText(new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }), SW - 14, SH - 12); s.textAlign = 'left';
     pantTex.needsUpdate = true;
   }
   dibujarPantalla(0);
@@ -280,14 +282,14 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
   for (let i = 0; i < 5; i++) { const p = add(new THREE.BoxGeometry(.5, .05, .07), mat('#1b2130', { metalness: .8 }), 0, .2, 0, silla); p.rotation.y = i / 5 * Math.PI * 2; p.translateX(.25); }
 
   // ---------- Polvo flotando en la luz ----------
-  const PN = celu ? 140 : 320, polvoG = new THREE.BufferGeometry(), pp = new Float32Array(PN * 3);
+  const PN = celu ? 90 : 200, polvoG = new THREE.BufferGeometry(), pp = new Float32Array(PN * 3);
   for (let i = 0; i < PN; i++) { pp[i * 3] = (Math.random() - .5) * 9; pp[i * 3 + 1] = Math.random() * 4.6; pp[i * 3 + 2] = -1.4 + Math.random() * 4; }
   polvoG.setAttribute('position', new THREE.BufferAttribute(pp, 3));
   sc.add(new THREE.Points(polvoG, new THREE.PointsMaterial({ color: '#bcd7ff', size: .018, transparent: true, opacity: .55, depthWrite: false })));
   animados.push((t, dt) => { for (let i = 0; i < PN; i++) { pp[i * 3 + 1] += dt * .04; pp[i * 3] += Math.sin(t * .3 + i) * dt * .02; if (pp[i * 3 + 1] > 4.6) pp[i * 3 + 1] = 0; } polvoG.attributes.position.needsUpdate = true; });
 
   // ---------- Postproceso (brillo de las luces) ----------
-  const comp = new EffectComposer(r);
+  const comp = new EffectComposer(r, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: celu ? 0 : 2 }));
   comp.addPass(new RenderPass(sc, cam));
   const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), celu ? .5 : .62, .45, .8);
   comp.addPass(bloom); comp.addPass(new OutputPass());
@@ -295,7 +297,7 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
   // ---------- Cámara ----------
   const camBase = new THREE.Vector3(), mira = new THREE.Vector3(-.35, 1.65, -.2), miraBase = new THREE.Vector3();
   function encuadre() {
-    const w = canvas.clientWidth, h = canvas.clientHeight; r.setSize(w, h, false); comp.setSize(w, h);
+    const w = canvas.clientWidth, h = canvas.clientHeight; r.setPixelRatio(calidad); comp.setPixelRatio(calidad); r.setSize(w, h, false); comp.setSize(w, h); bloom.setSize(Math.round(w * calidad / 2), Math.round(h * calidad / 2)); // el brillo se calcula a la mitad de resolución
     cam.aspect = w / h; const vertical = w / h < 1;
     cam.fov = vertical ? 58 : 36; cam.updateProjectionMatrix();
     camBase.set(vertical ? .9 : 2.4, vertical ? 2.7 : 2.75, vertical ? 9.6 : 8.6);
@@ -326,14 +328,14 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
   }
 
   // ---------- Bucle ----------
-  let corriendo = true, antes = performance.now(), t = 0, pantAcc = 0, listo = false;
+  let corriendo = true, antes = performance.now(), t = 0, pantAcc = 0, listo = false; const medida = { n: 0, t: 0 };
   const suave = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
   function bucle(ahora) {
     if (!corriendo) return;
+    if (document.hidden) { antes = ahora; requestAnimationFrame(bucle); return; }
     const dt = Math.min(.05, (ahora - antes) / 1000); antes = ahora; t += dt;
     animados.forEach(f => f(t, dt));
-    pantAcc += dt; if (pantAcc > .07) { pantAcc = 0; dibujarPantalla(t); }
-    lPant.intensity = 4.5 + Math.sin(t * 3) * .4;
+    pantAcc += dt; if (pantAcc > .1) { pantAcc = 0; dibujarPantalla(t); }
     if (zoom) {
       zoom.t = Math.min(1, zoom.t + dt / 1.5); const k = suave(zoom.t);
       cam.position.lerpVectors(zoom.desde, zoom.hasta, k); mira.lerpVectors(zoom.miraDesde, zoom.miraHasta, k);
@@ -344,6 +346,10 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo }) {
     }
     cam.lookAt(mira);
     comp.render();
+    medida.n++; medida.t += dt;
+    if (medida.t > 2) { const fps = medida.n / medida.t; medida.n = 0; medida.t = 0;
+      if (fps < 45 && calidad > .6) { calidad = Math.max(.6, calidad - .15); encuadre(); }
+      else if (fps < 30 && bloom.enabled && calidad <= .6) bloom.enabled = false; }
     if (!listo) { listo = true; alListo && alListo(); }
     requestAnimationFrame(bucle);
   }
