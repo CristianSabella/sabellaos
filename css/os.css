@@ -98,7 +98,7 @@ body.celu #entrada::before { background: linear-gradient(180deg, rgba(4,7,14,.85
 #inicio-menu .lado { position: relative; width: 48px; flex: none; display: flex; flex-direction: column; justify-content: space-between; background: rgba(14, 18, 30, .96); z-index: 2; transition: width .18s; overflow: hidden; }
 #inicio-menu .lado.abierto { width: 230px; box-shadow: 8px 0 24px rgba(0,0,0,.5); position: absolute; top: 0; bottom: 0; }
 #inicio-menu .lado button { height: 46px; width: 100%; display: flex; align-items: center; gap: 16px; padding-left: 14px; white-space: nowrap; color: #e8eef7; font-size: 14px; }
-#inicio-menu .lado button span { width: 20px; text-align: center; font-size: 17px; flex: none; }
+#inicio-menu .lado button span { width: 20px; display: grid; place-items: center; flex: none; }
 #inicio-menu .lado button img { width: 24px; height: 24px; margin-left: -2px; border-radius: 50%; object-fit: cover; object-position: 50% 20%; flex: none; }
 #inicio-menu .lado em { font-style: normal; opacity: 0; transition: opacity .15s; }
 #inicio-menu .lado.abierto em { opacity: 1; }

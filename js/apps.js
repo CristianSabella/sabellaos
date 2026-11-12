@@ -1,5 +1,5 @@
 // Las aplicaciones de SabellaOS
-import { PROYECTOS, PERFIL, CANCIONES, SITIO_VIEJO } from './datos.js?v=20261110h';
+import { PROYECTOS, PERFIL, CANCIONES, SITIO_VIEJO } from './datos.js?v=20261112a';
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 

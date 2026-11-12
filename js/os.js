@@ -1,6 +1,6 @@
 // SabellaOS: escritorio, ventanas, barra de tareas y menú inicio
-import { APPS, ESCRITORIO, ANCLADAS } from './apps.js?v=20261110h';
-import { PERFIL, PROYECTOS } from './datos.js?v=20261110h';
+import { APPS, ESCRITORIO, ANCLADAS } from './apps.js?v=20261112a';
+import { PERFIL, PROYECTOS } from './datos.js?v=20261112a';
 
 const $ = s => document.querySelector(s);
 const esCelu = () => document.body.classList.contains('celu');
@@ -164,13 +164,13 @@ function abrirInicio(filtro = '') {
   };
   m.classList.toggle('buscando', !!f);
   m.innerHTML = `<div class="lado">
-      <button class="hamb" title="Expandir"><span>☰</span><em>INICIO</em></button>
+      <button class="hamb" title="Expandir"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span><em>INICIO</em></button>
       <div class="lado-abajo">
         <button data-a="sobremi" title="${PERFIL.nombre}"><img src="${PERFIL.foto}" alt=""><em>${PERFIL.nombre}</em></button>
-        <button data-a="cv" title="Documentos"><span>🗎</span><em>Documentos</em></button>
-        <button data-a="proyectos" title="Imágenes"><span>🖼</span><em>Imágenes</em></button>
-        <button data-a="terminal" title="Configuración"><span>⚙</span><em>Configuración</em></button>
-        <button data-a="apagar" title="Apagar (volver a la habitación)"><span>⏻</span><em>Inicio/Apagado</em></button>
+        <button data-a="cv" title="Documentos"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></span><em>Documentos</em></button>
+        <button data-a="proyectos" title="Imágenes"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg></span><em>Imágenes</em></button>
+        <button data-a="terminal" title="Configuración"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><em>Configuración</em></button>
+        <button data-a="apagar" title="Apagar (volver a la habitación)"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/></svg></span><em>Inicio/Apagado</em></button>
       </div></div>
     <div class="lista">${lista}</div>
     <div class="mosaicos">${GRUPOS.map(([g, its]) => `<div class="grupo"><h5>${g}</h5><div class="rejilla">${its.map(mosaico).join('')}</div></div>`).join('')}</div>`;
