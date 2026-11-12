@@ -22,8 +22,11 @@ body.celu #entrada::before { background: linear-gradient(180deg, rgba(4,7,14,.85
 #entrada-txt h1 span { background: linear-gradient(135deg, var(--azul), var(--violeta), var(--fucsia)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 #entrada-txt p { color: var(--gris); font-weight: 500; font-size: clamp(15px, 1.3vw, 22px); }
 #entrar { position: absolute; left: 50%; bottom: max(40px, env(safe-area-inset-bottom)); transform: translateX(-50%); padding: 14px 26px; border-radius: 40px; background: rgba(5, 11, 20, .78); border: 1px solid rgba(214, 59, 176, .6); font-weight: 600; font-size: clamp(14px, 1.1vw, 18px); box-shadow: 0 0 30px rgba(214, 59, 176, .35); animation: latir 2s ease-in-out infinite; white-space: nowrap; transition: opacity .5s; }
+/* el brillo que late es una capa aparte que solo cambia de opacidad: no se vuelve a pintar en cada cuadro */
+#entrar::before { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 0 46px rgba(214, 59, 176, .6); opacity: 0; animation: latirBrillo 2s ease-in-out infinite; pointer-events: none; }
 #entrar b { color: var(--azul); }
-@keyframes latir { 50% { box-shadow: 0 0 46px rgba(214, 59, 176, .6); transform: translateX(-50%) scale(1.04); } }
+@keyframes latir { 50% { transform: translateX(-50%) scale(1.04); } }
+@keyframes latirBrillo { 50% { opacity: 1; } }
 #saltar { position: absolute; right: 20px; top: 18px; color: var(--gris); font-size: 13px; padding: 8px 12px; border-radius: 8px; transition: opacity .5s; }
 #saltar:hover { color: var(--texto); background: rgba(255,255,255,.06); }
 #entrada.zoom #entrada-txt, #entrada.zoom #entrar, #entrada.zoom #saltar { opacity: 0; pointer-events: none; }
@@ -243,10 +246,10 @@ iframe.app-frame { width: 100%; height: 100%; border: 0; display: block; backgro
 /* Carteles flotantes de la habitación */
 #marcas { position: absolute; inset: 0; pointer-events: none; z-index: 2; transition: opacity .4s; }
 #entrada.zoom #marcas { opacity: 0; }
-.marca { position: absolute; transform: translate(-50%, -100%); pointer-events: auto; display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 10px; border-radius: 30px; background: rgba(5,11,20,.85); border: 1px solid var(--c); color: var(--texto); font-weight: 600; font-size: 13px; white-space: nowrap; box-shadow: 0 0 22px color-mix(in srgb, var(--c) 45%, transparent); animation: flotar 2.4s ease-in-out infinite; }
+.marca { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); will-change: transform; pointer-events: auto; display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 10px; border-radius: 30px; background: rgba(5,11,20,.85); border: 1px solid var(--c); color: var(--texto); font-weight: 600; font-size: 13px; white-space: nowrap; box-shadow: 0 0 22px color-mix(in srgb, var(--c) 45%, transparent); animation: flotar 2.4s ease-in-out infinite; }
 .marca::after { content: ''; position: absolute; left: 50%; bottom: -7px; width: 10px; height: 10px; background: rgba(5,11,20,.85); border-right: 1px solid var(--c); border-bottom: 1px solid var(--c); transform: translateX(-50%) rotate(45deg); }
 .marca i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); animation: latido 1s infinite; font-style: normal; }
-@keyframes flotar { 50% { margin-top: -6px; } }
+@keyframes flotar { 50% { translate: 0 -6px; } } /* flota sin recalcular el diseño de la página */
 @keyframes latido { 50% { transform: scale(1.5); opacity: .6; } }
 body.celu .marca { font-size: 12px; padding: 7px 11px 7px 9px; }
 

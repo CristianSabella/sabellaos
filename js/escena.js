@@ -28,7 +28,16 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   // ---------- Luces (paredes bañadas de celeste y violeta, como un setup real) ----------
   sc.add(new THREE.HemisphereLight('#6f8fe0', '#2a1640', 1.25));
   const lCeleste = new THREE.PointLight('#38d6ff', 30, 11, 1.5); lCeleste.position.set(-3.6, 3.2, .4); sc.add(lCeleste);
-  const lVioleta = new THREE.PointLight('#a855f7', 18, 7, 1.6); lVioleta.position.set(.4, .5, -.7); sc.add(lVioleta); // bajo el escritorio
+  // El resplandor violeta de abajo del escritorio ya no es una luz de verdad (cada luz se calcula en toda la habitación):
+  // ahora es un brillo pintado en el piso, con el mismo color, que cuesta casi nada.
+  {
+    const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+    const g = x.createRadialGradient(128, 128, 0, 128, 128, 128); g.addColorStop(0, 'rgba(190,110,255,1)'); g.addColorStop(.2, 'rgba(168,85,247,.6)'); g.addColorStop(.55, 'rgba(168,85,247,.14)'); g.addColorStop(1, 'rgba(168,85,247,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const resplandor = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 3.6), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    resplandor.rotation.x = -Math.PI / 2; resplandor.rotation.z = -.3; resplandor.position.set(.25, .012, .1); sc.add(resplandor);
+  }
   const lFuc = new THREE.PointLight('#ff4fd8', 18, 8, 1.6); lFuc.position.set(1.6, 3.4, -.9); sc.add(lFuc);
   const sol = new THREE.DirectionalLight('#b8a8ff', .55); sol.position.set(1, 6, 7); sc.add(sol);
 
@@ -125,7 +134,7 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   const fig = (x, y, col) => { add(new THREE.CylinderGeometry(.06, .07, .03, 16), mat('#111'), x, y + .015, -1.5); add(new THREE.CapsuleGeometry(.045, .16, 4, 8), mat(col, { metalness: .5 }), x, y + .14, -1.5); add(new THREE.SphereGeometry(.04, 12, 8), mat(col), x, y + .29, -1.5); };
   fig(1.35, 3.62, '#8a93a8'); fig(1.6, 3.62, '#c2410c');
   // vitrina de vidrio con figura adentro
-  add(new THREE.BoxGeometry(.42, .5, .3), new THREE.MeshPhysicalMaterial({ color: '#cfe8ff', transparent: true, opacity: .12, roughness: .05 }), 3.0, 3.42, -1.5);
+  add(new THREE.BoxGeometry(.42, .5, .3), new THREE.MeshStandardMaterial({ color: '#cfe8ff', transparent: true, opacity: .12, roughness: .05 }), 3.0, 3.42, -1.5);
   const vitrinaLuz = add(new THREE.BoxGeometry(.42, .015, .3), brillo(FUC, 1.6), 3.0, 3.66, -1.5);
   fig(3.0, 3.17, '#e8bd4c');
 
@@ -252,7 +261,7 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   // ---------- Gabinete blanco tipo pecera: frente y lateral de vidrio, ventiladores RGB y componentes adentro ----------
   const gab = new THREE.Group(); gab.position.set(2.8, 1.06, -.75); gab.rotation.y = .35; gab.scale.setScalar(1.22); grupo.add(gab);
   const W = .5, H = 1.08, D = .98, blanco = mat('#aeb3c0', { roughness: .6, metalness: .1 });
-  const vidrio = new THREE.MeshPhysicalMaterial({ color: '#dfe9ff', transparent: true, opacity: .14, roughness: .05, metalness: 0, depthWrite: false });
+  const vidrio = new THREE.MeshStandardMaterial({ color: '#dfe9ff', transparent: true, opacity: .14, roughness: .05, metalness: 0, depthWrite: false });
   // estructura: techo, piso, fondo y lateral derecho macizos; marcos blancos en los bordes
   add(new THREE.BoxGeometry(W, .035, D), blanco, 0, H - .018, 0, gab);
   add(new THREE.BoxGeometry(W, .06, D), blanco, 0, .03, 0, gab);
@@ -348,7 +357,7 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   }
 
   // ---------- Polvo flotando en la luz ----------
-  const PN = celu ? 90 : 200, polvoG = new THREE.BufferGeometry(), pp = new Float32Array(PN * 3);
+  const PN = celu ? 50 : 160, polvoG = new THREE.BufferGeometry(), pp = new Float32Array(PN * 3);
   for (let i = 0; i < PN; i++) { pp[i * 3] = (Math.random() - .5) * 9; pp[i * 3 + 1] = Math.random() * 4.6; pp[i * 3 + 2] = -1.4 + Math.random() * 4; }
   polvoG.setAttribute('position', new THREE.BufferAttribute(pp, 3));
   sc.add(new THREE.Points(polvoG, new THREE.PointsMaterial({ color: '#bcd7ff', size: .018, transparent: true, opacity: .55, depthWrite: false })));
@@ -365,13 +374,14 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   MARCAS.forEach(m => { m.el = document.createElement('button'); m.el.className = 'marca'; m.el.style.setProperty('--c', m.c); m.el.innerHTML = `<i></i>${m.txt}`; m.el.onclick = m.accion; capa.appendChild(m.el); });
   function moverMarcas() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
-    MARCAS.forEach(m => { m.obj.getWorldPosition(vTmp); vTmp.y += m.alto; vTmp.project(cam); const mw = m.el.offsetWidth / 2 + 8; m.el.style.left = Math.max(mw, Math.min(w - mw, (vTmp.x + 1) / 2 * w)) + 'px'; m.el.style.top = ((-vTmp.y + 1) / 2 * h) + 'px'; });
+    // Se mueven con transform (no recalcula el diseño de la página) y el ancho se mide una sola vez, no en cada cuadro
+    MARCAS.forEach(m => { m.obj.getWorldPosition(vTmp); vTmp.y += m.alto; vTmp.project(cam); if (!m.mw) m.mw = m.el.offsetWidth / 2 + 8; const x = Math.max(m.mw, Math.min(w - m.mw, (vTmp.x + 1) / 2 * w)), y = (-vTmp.y + 1) / 2 * h; m.el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -100%)`; });
   }
 
   // ---------- Postproceso (brillo de las luces) ----------
   const comp = new EffectComposer(r, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0 }));
   comp.addPass(new RenderPass(sc, cam));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), celu ? .5 : .62, .45, .8);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), celu ? .45 : .62, .45, .8);
   comp.addPass(bloom); comp.addPass(new OutputPass());
 
   // ---------- Cámara ----------
@@ -384,7 +394,8 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
     miraBase.set(vertical ? .35 : .5, vertical ? 2.35 : 1.55, -.2);
     if (!zoom) { cam.position.copy(camBase); mira.copy(miraBase); }
   }
-  let zoom = null; encuadre(); window.addEventListener('resize', encuadre);
+  let zoom = null; encuadre(); window.addEventListener('resize', () => { encuadre(); MARCAS.forEach(m => m.mw = 0); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => MARCAS.forEach(m => m.mw = 0)); // re-medir cuando carga la letra
   const puntero = new THREE.Vector2();
   window.addEventListener('pointermove', e => { puntero.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); });
 
