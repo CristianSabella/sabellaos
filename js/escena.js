@@ -12,7 +12,9 @@ const ida = t => { t = ((t % 2) + 2) % 2; return t < 1 ? t : 2 - t; };
 
 export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   const r = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false });
-  const PISO = celu ? .9 : 1; let calidad = Math.min(window.devicePixelRatio || 1, celu ? 1.5 : 1.75), brilloDiv = 2; r.setPixelRatio(calidad);
+  // Arranca en calidad media y sube sola si la PC o el celular aguantan (así no se traba al entrar).
+  // El brillo se calcula a un cuarto de resolución: es un resplandor difuso, se ve igual y cuesta mucho menos.
+  const PISO = celu ? .9 : 1, DPR = window.devicePixelRatio || 1; let techo = Math.min(DPR, celu ? 1.5 : 1.75), calidad = Math.min(DPR, 1), brilloDiv = 4, bienSeguidas = 0; r.setPixelRatio(calidad);
   r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.25;
   const sc = new THREE.Scene(); sc.background = new THREE.Color('#070b16'); sc.fog = new THREE.Fog('#070b16', 14, 30);
   const cam = new THREE.PerspectiveCamera(36, 1, .05, 60);
@@ -367,7 +369,7 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   }
 
   // ---------- Postproceso (brillo de las luces) ----------
-  const comp = new EffectComposer(r, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: celu ? 0 : 2 }));
+  const comp = new EffectComposer(r, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0 }));
   comp.addPass(new RenderPass(sc, cam));
   const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), celu ? .5 : .62, .45, .8);
   comp.addPass(bloom); comp.addPass(new OutputPass());
@@ -397,8 +399,10 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
     if (ray.intersectObject(fri, true).length) return entrar('friday');
     if (ray.intersectObject(grupo, true).length || celu) entrar();
   });
+  let ultimoMouse = 0;
   canvas.addEventListener('pointermove', e => {
     if (zoom) return;
+    const ya = performance.now(); if (ya - ultimoMouse < 100) return; ultimoMouse = ya; // 10 veces por segundo alcanza
     const p = new THREE.Vector2(e.clientX / canvas.clientWidth * 2 - 1, -(e.clientY / canvas.clientHeight) * 2 + 1);
     ray.setFromCamera(p, cam); canvas.style.cursor = ray.intersectObjects([grupo, cel, rob, fri], true).length ? 'pointer' : 'default';
   });
@@ -413,12 +417,15 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
   // ---------- Bucle ----------
   let corriendo = true, antes = performance.now(), t = 0, pantAcc = 0, listo = false; const medida = { n: 0, t: 0 };
   const suave = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  let ultimoCuadro = 0;
   function bucle(ahora) {
     if (!corriendo) return;
     if (document.hidden) { antes = ahora; requestAnimationFrame(bucle); return; }
+    // tope de 60 cuadros por segundo: en monitores de 144 Hz no dibuja de más
+    if (ahora - ultimoCuadro < 1000 / 60 - 2) { requestAnimationFrame(bucle); return; } ultimoCuadro = ahora;
     const dt = Math.min(.05, (ahora - antes) / 1000); antes = ahora; t += dt;
     animados.forEach(f => f(t, dt));
-    pantAcc += dt; if (pantAcc > .1) { pantAcc = 0; dibujarPantalla(t); }
+    pantAcc += dt; if (pantAcc > .25) { pantAcc = 0; dibujarPantalla(t); } // 4 veces por segundo: se sigue viendo animado
     if (zoom) {
       zoom.t = Math.min(1, zoom.t + dt / 1.5); const k = suave(zoom.t);
       cam.position.lerpVectors(zoom.desde, zoom.hasta, k); mira.lerpVectors(zoom.miraDesde, zoom.miraHasta, k);
@@ -433,8 +440,8 @@ export function iniciarEscena({ canvas, celu, alEntrar, alListo, whatsapp }) {
     medida.n++; medida.t += dt;
     if (medida.t > 2) { const fps = medida.n / medida.t; medida.n = 0; medida.t = 0;
       // primero se baja lo que no se nota (el brillo), y la nitidez nunca baja de la resolución real de la pantalla
-      if (fps < 50 && brilloDiv < 4) { brilloDiv = 4; encuadre(); }
-      else if (fps < 50 && calidad > PISO) { calidad = Math.max(PISO, calidad - .25); encuadre(); }
+      if (fps < 50 && calidad > PISO) { techo = Math.min(techo, calidad - .25); calidad = Math.max(PISO, calidad - .25); bienSeguidas = 0; encuadre(); }
+      else if (fps >= 56 && calidad < techo) { if (++bienSeguidas >= 2) { calidad = Math.min(techo, calidad + .25); bienSeguidas = 0; encuadre(); } }
       else if (fps < 30 && bloom.enabled) bloom.enabled = false; }
     if (!listo) { listo = true; alListo && alListo(); }
     requestAnimationFrame(bucle);
